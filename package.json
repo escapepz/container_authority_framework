@@ -1,0 +1,10 @@
+{
+    "scripts": {
+        "clean": "pzstudio clean",
+        "build": "pzstudio clean && pzstudio build",
+        "watch": "pzstudio clean && pzstudio build && pzstudio watch",
+        "update": "pzstudio update",
+        "experimental:setup:vanilla": "mkdir .tmp & mklink /J \"%CD%\\.tmp\\vanilla\" \"%ProgramFiles(x86)%\\Steam\\steamapps\\common\\ProjectZomboid\\media\\lua\"",
+        "experimental:setup:nonsteam:container_authority_framework": "mklink /J \"C:\\ZomboidClient1\\mods\\container_authority_framework\" \"%CD%\\container_authority_framework\""
+    }
+}
