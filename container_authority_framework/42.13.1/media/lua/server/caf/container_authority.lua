@@ -6,6 +6,7 @@ local pcall = pcall
 local tostring = tostring
 local tonumber = tonumber
 local pairs = pairs
+local table_insert = table.insert
 
 local middleclass = pz_commons.kikito.middleclass
 -- Localize for speed (Kahlua2 optimization)
@@ -207,7 +208,7 @@ function ContainerAuthority:registerRule(phase, id, callback, priority)
 	if self.isReady then
 		self:_registerEvent(eventName, id, callback, priority)
 	else
-		table.insert(self.pendingRules, {
+		table_insert(self.pendingRules, {
 			eventName = eventName,
 			id = id,
 			callback = callback,
