@@ -1,0 +1,12 @@
+Sandbox_EN = {
+    Sandbox_ContainerAuthorityFramework = "Container Authority Framework",
+    
+    Sandbox_ContainerAuthorityFramework_ValidationEventListenersMax = "Max Validation Rules",
+    Sandbox_ContainerAuthorityFramework_ValidationEventListenersMax_tooltip = "Maximum number of rules allowed for the Validation phase. Excess rules will be pruned based on priority.",
+
+    Sandbox_ContainerAuthorityFramework_PreTransferEventListenersMax = "Max Pre-Transfer Rules",
+    Sandbox_ContainerAuthorityFramework_PreTransferEventListenersMax_tooltip = "Maximum number of rules allowed for the Pre-Transfer phase. Excess rules will be pruned based on priority.",
+
+    Sandbox_ContainerAuthorityFramework_PostTransferEventListenersMax = "Max Post-Transfer Rules",
+    Sandbox_ContainerAuthorityFramework_PostTransferEventListenersMax_tooltip = "Maximum number of rules allowed for the Post-Transfer phase. Excess rules will be pruned based on priority.",
+}

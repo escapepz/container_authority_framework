@@ -55,13 +55,52 @@ function ContainerAuthority:initialize()
 	self.ValidationEvent = VALIDATION_EV
 	self.PreTransferEvent = PRE_TRANSFER_EV
 	self.PostTransferEvent = POST_TRANSFER_EV
+	self.isReady = false
+	self.pendingRules = {} -- Queue for early registrations
+end
 
-	-- Initialize and Cap EventManager events (Performance Pruning)
-	EventManager.setMaxListeners(VALIDATION_EV, 25)
-	EventManager.setMaxListeners(PRE_TRANSFER_EV, 50)
-	EventManager.setMaxListeners(POST_TRANSFER_EV, 100)
+---Loads configuration from SandboxVars and sets up EventManager limits.
+---Should be called during OnInitGlobalModData.
+function ContainerAuthority:loadConfig()
+	local sandboxVars = {
+		ValidationEventListenersMax = 25,
+		PreTransferEventListenersMax = 50,
+		PostTransferEventListenersMax = 100,
+	}
 
-	SafeLogger.log("[CAF] ContainerAuthority initialized.", 30)
+	-- 1. Initialize SandboxVars Config
+	local SandboxVarsModule = pz_utils.escape.SandboxVarsModule
+	if SandboxVarsModule then
+		SandboxVarsModule.Init("ContainerAuthorityFramework", sandboxVars)
+
+		sandboxVars.ValidationEventListenersMax = SandboxVarsModule.Get("ValidationEventListenersMax", 25)
+		sandboxVars.PreTransferEventListenersMax = SandboxVarsModule.Get("PreTransferEventListenersMax", 50)
+		sandboxVars.PostTransferEventListenersMax = SandboxVarsModule.Get("PostTransferEventListenersMax", 100)
+	end
+
+	-- 2. Apply Limits from Sandbox
+	EventManager.setMaxListeners(VALIDATION_EV, sandboxVars.ValidationEventListenersMax)
+	EventManager.setMaxListeners(PRE_TRANSFER_EV, sandboxVars.PreTransferEventListenersMax)
+	EventManager.setMaxListeners(POST_TRANSFER_EV, sandboxVars.PostTransferEventListenersMax)
+
+	self.isReady = true
+	self:_processPendingRules()
+	SafeLogger.log("[CAF] ContainerAuthority initialized and ready.", 30)
+end
+
+---Internal: Registers all pending rules from the queue.
+function ContainerAuthority:_processPendingRules()
+	for _, rule in pairs(self.pendingRules) do
+		self:_registerEvent(rule.eventName, rule.id, rule.callback, rule.priority)
+	end
+	-- Clear queue to free memory
+	self.pendingRules = {}
+end
+
+---Internal helper to actually register with EventManager
+function ContainerAuthority:_registerEvent(eventName, id, callback, priority)
+	EventManager.on(eventName, callback, priority)
+	SafeLogger.log("[CAF] Registered rule: " .. tostring(id) .. " (Priority: " .. tostring(priority or 0) .. ")", 30)
 end
 
 ---Processes a transfer request through the 3-phase pipeline.
@@ -165,25 +204,33 @@ function ContainerAuthority:registerRule(phase, id, callback, priority)
 		error("Invalid CAF phase: " .. tostring(phase))
 	end
 
-	EventManager.on(eventName, callback, priority)
-
-	SafeLogger.log(
-		"[CAF] Registered "
-			.. tostring(phase)
-			.. " rule: "
-			.. tostring(id)
-			.. " (Priority: "
-			.. tostring(priority or 0)
-			.. ")",
-		30
-	)
+	if self.isReady then
+		self:_registerEvent(eventName, id, callback, priority)
+	else
+		table.insert(self.pendingRules, {
+			eventName = eventName,
+			id = id,
+			callback = callback,
+			priority = priority,
+		})
+		SafeLogger.log("[CAF] Queued rule for registration: " .. tostring(id), 30)
+	end
 end
 
 ---Engine Singleton Initialization
 local function init()
 	if not _G.ContainerAuthorityFramework then
 		_G.ContainerAuthorityFramework = ContainerAuthority:new()
+		_G.ContainerAuthorityFramework:initialize()
+
+		Events.OnInitGlobalModData.Add(function()
+			if _G.ContainerAuthorityFramework then
+				-- This is where the queue is processed and isReady becomes true
+				_G.ContainerAuthorityFramework:loadConfig()
+			end
+		end)
 	end
+
 	return _G.ContainerAuthorityFramework
 end
 

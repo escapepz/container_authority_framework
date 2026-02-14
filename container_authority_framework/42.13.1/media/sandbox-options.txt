@@ -1,1 +1,34 @@
 VERSION = 1,
+
+option ContainerAuthorityFramework.ValidationEventListenersMax
+{
+    page = ContainerAuthorityFramework,
+    translation = ContainerAuthorityFramework_ValidationEventListenersMax,
+    tooltip = ContainerAuthorityFramework_ValidationEventListenersMax_tooltip,
+    type = integer,
+    min = 1,
+    max = 1000,
+    default = 25,
+}
+
+option ContainerAuthorityFramework.PreTransferEventListenersMax
+{
+    page = ContainerAuthorityFramework,
+    translation = ContainerAuthorityFramework_PreTransferEventListenersMax,
+    tooltip = ContainerAuthorityFramework_PreTransferEventListenersMax_tooltip,
+    type = integer,
+    min = 1,
+    max = 1000,
+    default = 50,
+}
+
+option ContainerAuthorityFramework.PostTransferEventListenersMax
+{
+    page = ContainerAuthorityFramework,
+    translation = ContainerAuthorityFramework_PostTransferEventListenersMax,
+    tooltip = ContainerAuthorityFramework_PostTransferEventListenersMax_tooltip,
+    type = integer,
+    min = 1,
+    max = 1000,
+    default = 100,
+}
