@@ -70,6 +70,7 @@ function TestRunner.run()
 	print(string.format("Total:  %d", TestRunner.passed + TestRunner.failed))
 	print()
 
+	---@diagnostic disable-next-line: unnecessary-if
 	if TestRunner.failed > 0 then
 		print("FAILURES:")
 		for _, failure in ipairs(TestRunner.errors) do

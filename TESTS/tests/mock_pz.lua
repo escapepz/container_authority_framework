@@ -8,12 +8,22 @@ _G.Events = {
 		Add = function(func)
 			-- Store initialization functions to run them manually in tests if needed
 			if not _G._initCallbacks then
+				---@diagnostic disable-next-line: global-in-non-module
 				_G._initCallbacks = {}
 			end
 			table.insert(_G._initCallbacks, func)
 		end,
 	},
 }
+_G.ISTransferAction = {
+	transferItem = function() end,
+}
+_G.isServer = function()
+	return true
+end
+_G.isMultiplayer = function()
+	return false
+end
 
 -- 2. PZ Class Stubs
 -- InventoryItem
@@ -73,6 +83,7 @@ function mock_pz.setupGlobalEnvironment()
 	_G.IsoPlayer = IsoPlayer
 	_G.IsoObject = IsoObject
 
+	---@diagnostic disable-next-line: global-in-non-module
 	-- Mock SandboxVars
 	_G.SandboxVars = {
 		CAFExampleRules = {
@@ -81,24 +92,13 @@ function mock_pz.setupGlobalEnvironment()
 		},
 	}
 
+	---@diagnostic disable-next-line: global-in-non-module
 	-- Mock container_authority_framework singleton for rules to register against
-	_G.ContainerAuthorityFramework = {
-		registerRule = function(self, phase, id, callback, priority)
-			if not self._registeredRules then
-				self._registeredRules = {}
-			end
-			table.insert(self._registeredRules, {
-				phase = phase,
-				id = id,
-				callback = callback,
-				priority = priority,
-			})
-			print("[MOCK CAF] Registered rule: " .. id .. " (" .. phase .. ")")
-		end,
-	}
+	_G.ContainerAuthorityFramework = {}
 
 	-- Helper to trigger init events
 	function mock_pz.triggerOnInit()
+		---@diagnostic disable-next-line: unnecessary-if
 		if _G._initCallbacks then
 			for _, func in ipairs(_G._initCallbacks) do
 				func()

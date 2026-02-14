@@ -9,40 +9,32 @@ package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/.tmp/pz_
 
 local TestRunner = require("test_framework")
 local mock_pz = require("mock_pz")
+local pz_utils = require("pz_utils_shared")
 
--- Setup environment
+-- Setup environment (Game Mocks)
 mock_pz.setupGlobalEnvironment()
 
--- Mock dependencies required by the rules
-_G.pz_utils_shared = {
-	escape = {
-		SafeLogger = {
-			init = function() end,
-			log = function() end,
-			shouldLog = function()
-				return true
-			end,
-		},
-		SandboxVarsModule = {
-			Init = function() end,
-			Get = function(key, default)
-				return _G.SandboxVars.CAFExampleRules[key] or default
-			end,
-		},
-	},
-	konijima = {
-		Utilities = {
-			IsPlayerAdmin = function(player)
-				return player:getAccessLevel() == "Admin"
-			end,
-		},
-	},
-}
-_G["pz_utils_shared"] = _G.pz_utils_shared -- Ensure global access for require
+-- Reset CAF Global to ensure a fresh, real initialization
+_G.ContainerAuthorityFramework = nil
 
--- Mock the CAF Module require result
-package.preload["container_authority_framework"] = function()
-	return _G.ContainerAuthorityFramework
+-- Load Real CAF
+local CAF_Init = require("caf/container_authority")
+local CAF = CAF_Init()
+
+-- SPY on CAF.registerRule to capture registrations for verification
+-- We do this because the rule function is local to the rule file, so we can't inspect equality easily.
+local registeredSpy = {}
+local real_registerRule = CAF.registerRule
+
+function CAF:registerRule(phase, id, callback, priority)
+	table.insert(registeredSpy, {
+		phase = phase,
+		id = id,
+		callback = callback,
+		priority = priority,
+	})
+	-- Call the real implementation to ensure actual registration logic runs
+	real_registerRule(self, phase, id, callback, priority)
 end
 
 -- Load the rule file
@@ -53,8 +45,10 @@ local shop_ownership_rule = require("caf/rules/shop_ownership_rule")
 -- ============================================================================
 
 TestRunner.register("ShopOwnership: Registers correctly via OnInitGlobalModData", function()
-	-- Reset registration log
-	_G.ContainerAuthorityFramework._registeredRules = {}
+	-- Reset spy and CAF state for test
+	registeredSpy = {}
+	CAF.pendingRules = {}
+	CAF.isReady = false
 
 	-- Call the rule's init wrapper
 	shop_ownership_rule()
@@ -62,9 +56,9 @@ TestRunner.register("ShopOwnership: Registers correctly via OnInitGlobalModData"
 	-- Trigger the init event to simulate game start
 	mock_pz.triggerOnInit()
 
-	local registered = _G.ContainerAuthorityFramework._registeredRules
+	-- Verify via Spy
 	local found = false
-	for _, rule in ipairs(registered) do
+	for _, rule in ipairs(registeredSpy) do
 		if rule.id == "shop_ownership" and rule.phase == "validation" then
 			found = true
 			break
@@ -92,15 +86,16 @@ TestRunner.register("ShopOwnership: Logic prevents theft", function()
 		flags = { rejected = false, reason = nil },
 	}
 
-	-- Get the validation function directly from registration for testing logic
-	local registeredCallback = nil
+	-- Capture the callback
+	registeredSpy = {}
+	CAF.pendingRules = {}
+	CAF.isReady = false
 
-	-- Re-register to capture callback
-	_G.ContainerAuthorityFramework._registeredRules = {}
 	shop_ownership_rule()
 	mock_pz.triggerOnInit()
 
-	for _, rule in ipairs(_G.ContainerAuthorityFramework._registeredRules) do
+	local registeredCallback = nil
+	for _, rule in ipairs(registeredSpy) do
 		if rule.id == "shop_ownership" then
 			registeredCallback = rule.callback
 		end
@@ -108,6 +103,7 @@ TestRunner.register("ShopOwnership: Logic prevents theft", function()
 
 	TestRunner.assert_not_nil(registeredCallback, "Callback must be captured")
 
+	---@diagnostic disable-next-line: need-check-nil
 	-- Run validation logic
 	registeredCallback(context)
 
@@ -132,12 +128,13 @@ TestRunner.register("ShopOwnership: Allows owner access", function()
 
 	-- Get callback
 	local registeredCallback = nil
-	for _, rule in ipairs(_G.ContainerAuthorityFramework._registeredRules) do
+	for _, rule in ipairs(registeredSpy) do
 		if rule.id == "shop_ownership" then
 			registeredCallback = rule.callback
 		end
 	end
 
+	---@diagnostic disable-next-line: need-check-nil
 	registeredCallback(context)
 
 	TestRunner.assert_true(not context.flags.rejected, "Should allow owner access")

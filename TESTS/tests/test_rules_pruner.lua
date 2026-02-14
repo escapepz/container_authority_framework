@@ -119,8 +119,11 @@ TestRunner.register("Pruner: Enforces limit of 5 listeners", function()
 
 	local event = MockEventManager.events["CAF:Validation"]
 
+	---@diagnostic disable-next-line: need-check-nil
 	TestRunner.assert_equals(#event.listeners, 5, "Should have exactly 5 listeners")
+	---@diagnostic disable-next-line: need-check-nil, undefined-field
 	TestRunner.assert_equals(event.listeners[1].p, 100, "Highest priority should remain")
+	---@diagnostic disable-next-line: need-check-nil, undefined-field
 	TestRunner.assert_equals(event.listeners[5].p, 60, "Lowest kept priority should be 60")
 end)
 
