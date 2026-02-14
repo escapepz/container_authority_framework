@@ -2,6 +2,9 @@
 local pz_utils = require("pz_utils_shared")
 local pz_commons = require("pz_lua_commons_shared")
 
+local error, unpack, tostring = error, unpack, tostring
+local string_format = string.format
+
 local middleclass = pz_commons.kikito.middleclass
 local EventManager = pz_utils.escape.EventManager
 local SafeLogger = pz_utils.escape.SafeLogger
@@ -16,17 +19,17 @@ SafeLogger.init("ContainerAuthority")
 local ContainerAuthority = middleclass("ContainerAuthority")
 
 function ContainerAuthority:initialize()
-    self._isProcessing = false
-    self.ValidationEvent = "CAF:Validation"
-    self.PreTransferEvent = "CAF:PreTransfer"
-    self.PostTransferEvent = "CAF:PostTransfer"
-    
-    -- Initialize EventManager events
-    EventManager.getOrCreateEvent(self.ValidationEvent)
-    EventManager.getOrCreateEvent(self.PreTransferEvent)
-    EventManager.getOrCreateEvent(self.PostTransferEvent)
-    
-    SafeLogger.log("[CAF] ContainerAuthority initialized.", 30)
+	self._isProcessing = false
+	self.ValidationEvent = "CAF:Validation"
+	self.PreTransferEvent = "CAF:PreTransfer"
+	self.PostTransferEvent = "CAF:PostTransfer"
+
+	-- Initialize and Cap EventManager events (Performance Pruning)
+	EventManager.setMaxListeners(self.ValidationEvent, 25)
+	EventManager.setMaxListeners(self.PreTransferEvent, 50)
+	EventManager.setMaxListeners(self.PostTransferEvent, 100)
+
+	SafeLogger.log("[CAF] ContainerAuthority initialized.", 30)
 end
 
 ---Processes a transfer request through the 3-phase pipeline.
@@ -38,52 +41,49 @@ end
 ---@param ... any Additional arguments for the original function (e.g., dropSquare).
 ---@return any The result of the original transfer function or nil if rejected.
 function ContainerAuthority:processTransfer(character, item, src, dest, originalFunc, ...)
-    if self._isProcessing then
-        return originalFunc(self, character, item, src, dest, ...)
-    end
+	if self._isProcessing then
+		return originalFunc(self, character, item, src, dest, ...)
+	end
 
-    self._isProcessing = true
-    
-    -- Create Context Object
-    local context = {
-        character = character,
-        item = item,
-        src = src,
-        dest = dest,
-        args = {...},
-        metadata = {},
-        flags = {
-            rejected = false,
-            reason = nil,
-            adminOverride = false
-        }
-    }
+	self._isProcessing = true
 
-    -- 1. VALIDATION PHASE (Blocking)
-    local validationEvent = EventManager.getEvent(self.ValidationEvent)
-    validationEvent:Trigger(context)
+	-- Create Context Object
+	local context = {
+		character = character,
+		item = item,
+		src = src,
+		dest = dest,
+		args = { ... },
+		metadata = {},
+		flags = {
+			rejected = false,
+			reason = nil,
+			adminOverride = false,
+		},
+	}
 
-    if context.flags.rejected then
-        SafeLogger.log(string.format("[CAF] Transfer rejected: %s", context.flags.reason or "Unknown reason"), 40)
-        self._isProcessing = false
-        return nil
-    end
+	-- 1. VALIDATION PHASE (Blocking)
+	EventManager.trigger(self.ValidationEvent, context)
 
-    -- 2. PRE-TRANSFER PHASE (Mutation/Auditing)
-    local preEvent = EventManager.getEvent(self.PreTransferEvent)
-    preEvent:Trigger(context)
+	if context.flags.rejected then
+		SafeLogger.log(string_format("[CAF] Transfer rejected: %s", context.flags.reason or "Unknown reason"), 40)
+		self._isProcessing = false
+		return nil
+	end
 
-    -- 3. EXECUTION
-    local result = originalFunc(self, character, item, src, dest, unpack(context.args))
+	-- 2. PRE-TRANSFER PHASE (Mutation/Auditing)
+	EventManager.trigger(self.PreTransferEvent, context)
 
-    -- 4. POST-TRANSFER PHASE (Reaction/Side-effects)
-    -- We pass the result just in case
-    context.result = result
-    local postEvent = EventManager.getEvent(self.PostTransferEvent)
-    postEvent:Trigger(context)
+	-- 3. EXECUTION
+	local result = originalFunc(self, character, item, src, dest, unpack(context.args))
 
-    self._isProcessing = false
-    return result
+	-- 4. POST-TRANSFER PHASE (Reaction/Side-effects)
+	-- We pass the result just in case
+	context.result = result
+	EventManager.trigger(self.PostTransferEvent, context)
+
+	self._isProcessing = false
+	return result
 end
 
 ---Registers a rule for a specific phase.
@@ -92,19 +92,23 @@ end
 ---@param callback function The rule logic.
 ---@param priority number The priority (lower = earlier).
 function ContainerAuthority:registerRule(phase, id, callback, priority)
-    local eventName
-    if phase == "validation" then eventName = self.ValidationEvent
-    elseif phase == "pre" then eventName = self.PreTransferEvent
-    elseif phase == "post" then eventName = self.PostTransferEvent
-    else error("Invalid CAF phase: " .. tostring(phase)) end
+	local eventName
+	if phase == "validation" then
+		eventName = self.ValidationEvent
+	elseif phase == "pre" then
+		eventName = self.PreTransferEvent
+	elseif phase == "post" then
+		eventName = self.PostTransferEvent
+	else
+		error("Invalid CAF phase: " .. tostring(phase))
+	end
 
-    local event = EventManager.getEvent(eventName)
-    event:Add(callback)
-    
-    SafeLogger.log(string.format("[CAF] Registered %s rule: %s (Priority: %d)", phase, id, priority or 50), 30)
+	EventManager.on(eventName, callback, priority)
+
+	SafeLogger.log(string_format("[CAF] Registered %s rule: %s (Priority: %d)", phase, id, priority or 0), 30)
 end
 
 ---Engine Singleton
-CAF = ContainerAuthority:new()
+_G.CAF = ContainerAuthority:new()
 
-return CAF
+return _G.CAF

@@ -5,19 +5,26 @@ SafeLogger.init("ContainerAuthority")
 
 ---Post-transfer rule to log successful transfers for auditing.
 local function logTransfer(context)
-    local char = context.character
-    local item = context.item
-    local srcName = context.src:getType() or "unknown"
-    local destName = context.dest:getType() or "unknown"
-    
-    SafeLogger.log(string.format("[CAF:Audit] Player %s moved %s from %s to %s", 
-        char:getUsername(), 
-        item:getFullType(), 
-        srcName, 
-        destName), 20)
+	local char = context.character
+	local item = context.item
+	local srcName = context.src:getType() or "unknown"
+	local destName = context.dest:getType() or "unknown"
+
+	SafeLogger.log(
+		string.format(
+			"[CAF:Audit] Player %s moved %s from %s to %s",
+			char:getUsername(),
+			item:getFullType(),
+			srcName,
+			destName
+		),
+		20
+	)
 end
 
--- Register the rule
-CAF:registerRule("post", "audit_log", logTransfer, 500)
+return function()
+	-- Register the rule
+	CAF:registerRule("post", "audit_log", logTransfer, 500)
 
-SafeLogger.log("[CAF] Audit Log Rule loaded.", 30)
+	SafeLogger.log("[CAF] Audit Log Rule loaded.", 30)
+end

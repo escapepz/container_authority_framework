@@ -3,6 +3,8 @@ local pz_utils = require("pz_utils_shared")
 local SafeLogger = pz_utils.escape.SafeLogger
 SafeLogger.init("ContainerAuthority")
 
+local isServer, isMultiplayer = isServer, isMultiplayer
+
 -- Detour ISTransferAction:transferItem
 local original_ISTransferAction_transferItem = ISTransferAction.transferItem
 
@@ -14,13 +16,22 @@ local original_ISTransferAction_transferItem = ISTransferAction.transferItem
 ---@param dropSquare IsoGridSquare?
 ---@return InventoryItem
 function ISTransferAction:transferItem(character, item, srcContainer, destContainer, dropSquare)
-    -- Handle authoritative environments: Server (MP) or Local (SP)
-    if isServer() or not isMultiplayer() then
-        return CAF:processTransfer(character, item, srcContainer, destContainer, original_ISTransferAction_transferItem, dropSquare)
-    end
-    
-    -- Client (MP) - just pass through, server will handle validation
-    return original_ISTransferAction_transferItem(self, character, item, srcContainer, destContainer, dropSquare)
+	-- Handle authoritative environments: Server (MP) or Local (SP)
+	if isServer() or not isMultiplayer() then
+		return CAF:processTransfer(
+			character,
+			item,
+			srcContainer,
+			destContainer,
+			original_ISTransferAction_transferItem,
+			dropSquare
+		)
+	end
+
+	-- Client (MP) - just pass through, server will handle validation
+	return original_ISTransferAction_transferItem(self, character, item, srcContainer, destContainer, dropSquare)
 end
 
-SafeLogger.log("[CAF] ISTransferAction:transferItem patched successfully.", 30)
+return function()
+	SafeLogger.log("[CAF] ISTransferAction:transferItem patched successfully.", 30)
+end
