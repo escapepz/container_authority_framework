@@ -4,6 +4,7 @@
         "*.txt": "ZedScripts"
     },
     "[lua]": {
-        "editor.defaultFormatter": "JohnnyMorganz.stylua"
-    }
+        "editor.defaultFormatter": "JohnnyMorganz.stylua",
+    },
+    "lua.debug.settings.luaVersion": "lua51"
 }

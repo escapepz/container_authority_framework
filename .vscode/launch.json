@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Shop Ownership Tests",
+            "type": "lua",
+            "request": "launch",
+            "program": "${workspaceFolder}/TESTS/tests/caf_example_rules/test_shop_ownership.lua",
+            "cwd": "${workspaceFolder}/TESTS/tests",
+            "stopOnEntry": false,
+            "luaVersion": "lua51"
+        },
+        {
+            "name": "Debug Rules Pruner Tests",
+            "type": "lua",
+            "request": "launch",
+            "program": "${workspaceFolder}/TESTS/tests/test_rules_pruner.lua",
+            "cwd": "${workspaceFolder}/TESTS/tests",
+            "stopOnEntry": false,
+            "luaVersion": "lua51"
+        }
+    ]
+}
