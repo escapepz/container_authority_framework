@@ -12,7 +12,8 @@
     "mods": {
         "container_authority_framework": {
             "name": "Container Authority Framework",
-            "description": ""
+            "description": "",
+            "require": "\\pz_lua_commons"
         }
     }
 }
