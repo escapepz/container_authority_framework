@@ -3,6 +3,8 @@ local pz_utils = require("pz_utils_shared")
 local SafeLogger = pz_utils.escape.SafeLogger
 SafeLogger.init("ContainerAuthority")
 
+local tostring = tostring
+
 ---Validation rule to prevent players from taking items from shop containers they don't own.
 local function validateShopOwnership(context)
 	local item = context.item
@@ -11,7 +13,10 @@ local function validateShopOwnership(context)
 
 	-- Admin override
 	if character:getAccessLevel() ~= "None" and character:getAccessLevel() ~= "" then
-		SafeLogger.log(string.format("[CAF] Admin %s bypassed shop validation.", character:getUsername()), 30)
+		---@diagnostic disable-next-line: unnecessary-if
+		if not SafeLogger.shouldLog or SafeLogger.shouldLog(30) then
+			SafeLogger.log("[CAF] Admin " .. tostring(character:getUsername()) .. " bypassed shop validation.", 30)
+		end
 		return
 	end
 
