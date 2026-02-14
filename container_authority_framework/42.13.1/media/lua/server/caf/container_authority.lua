@@ -179,7 +179,12 @@ function ContainerAuthority:registerRule(phase, id, callback, priority)
 	)
 end
 
----Engine Singleton
-_G.CAF = ContainerAuthority:new()
+---Engine Singleton Initialization
+local function init()
+	if not _G.ContainerAuthorityFramework then
+		_G.ContainerAuthorityFramework = ContainerAuthority:new()
+	end
+	return _G.ContainerAuthorityFramework
+end
 
-return _G.CAF
+return init

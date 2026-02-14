@@ -1,4 +1,4 @@
-local CAF = require("caf/container_authority")
+local CAF = require("container_authority_framework")
 local pz_utils = require("pz_utils_shared")
 local SafeLogger = pz_utils.escape.SafeLogger
 SafeLogger.init("ContainerAuthority")
@@ -30,6 +30,11 @@ local function logTransfer(context)
 end
 
 return function()
+	if not CAF then
+		SafeLogger.log("[CAF] Error: CAF singleton missing during audit_log registration!", 50)
+		return
+	end
+
 	-- Register the rule
 	CAF:registerRule("post", "audit_log", logTransfer, 500)
 

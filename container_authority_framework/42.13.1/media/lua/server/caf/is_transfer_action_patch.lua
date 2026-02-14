@@ -1,4 +1,4 @@
-local CAF = require("caf/container_authority")
+local CAF = require("caf/container_authority")()
 local pz_utils = require("pz_utils_shared")
 local SafeLogger = pz_utils.escape.SafeLogger
 SafeLogger.init("ContainerAuthority")
@@ -16,8 +16,9 @@ local original_ISTransferAction_transferItem = ISTransferAction.transferItem
 ---@param dropSquare IsoGridSquare?
 ---@return InventoryItem
 function ISTransferAction:transferItem(character, item, srcContainer, destContainer, dropSquare)
+	---@diagnostic disable-next-line: unnecessary-if
 	-- Handle authoritative environments: Server (MP) or Local (SP)
-	if isServer() or not isMultiplayer() then
+	if CAF and (isServer() or not isMultiplayer()) then
 		return CAF:processTransfer(
 			character,
 			item,

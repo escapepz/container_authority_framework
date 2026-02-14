@@ -1,6 +1,7 @@
-local CAF = require("caf/container_authority")
+local CAF = require("container_authority_framework")
 local pz_utils = require("pz_utils_shared")
 local SafeLogger = pz_utils.escape.SafeLogger
+local KUtilities = pz_utils.konijima.Utilities
 SafeLogger.init("ContainerAuthority")
 
 local tostring = tostring
@@ -12,13 +13,13 @@ local function validateShopOwnership(context)
 	local character = context.character
 
 	-- Admin override
-	if character:getAccessLevel() ~= "None" and character:getAccessLevel() ~= "" then
-		---@diagnostic disable-next-line: unnecessary-if
-		if not SafeLogger.shouldLog or SafeLogger.shouldLog(30) then
-			SafeLogger.log("[CAF] Admin " .. tostring(character:getUsername()) .. " bypassed shop validation.", 30)
-		end
-		return
-	end
+	-- if KUtilities.IsPlayerAdmin(character) then
+	-- 	---@diagnostic disable-next-line: unnecessary-if
+	-- 	if not SafeLogger.shouldLog or SafeLogger.shouldLog(30) then
+	-- 		SafeLogger.log("[CAF] Admin " .. tostring(character:getUsername()) .. " bypassed shop validation.", 10)
+	-- 	end
+	-- 	return
+	-- end
 
 	-- Check if source container belongs to a shop
 	local parent = src:getParent()
@@ -32,6 +33,11 @@ local function validateShopOwnership(context)
 end
 
 return function()
+	if not CAF then
+		SafeLogger.log("[CAF] Error: CAF singleton missing during shop_ownership registration!", 50)
+		return
+	end
+
 	-- Register the rule
 	CAF:registerRule("validation", "shop_ownership", validateShopOwnership, 100)
 

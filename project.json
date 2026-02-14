@@ -7,13 +7,18 @@
         "tags": [
             "Build 42"
         ],
-        "excludes": []
+        "excludes": ["caf_example_rules"]
     },
     "mods": {
         "container_authority_framework": {
             "name": "Container Authority Framework",
             "description": "",
             "require": "\\pz_lua_commons"
+        },
+        "caf_example_rules": {
+            "name": "Container Authority Framework Example Rules",
+            "description": "",
+            "require": "\\container_authority_framework"
         }
     }
 }

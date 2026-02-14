@@ -1,0 +1,5 @@
+id=caf_example_rules
+name=Container Authority Framework Example Rules
+poster=poster.png
+icon=icon.png
+require=\container_authority_framework
