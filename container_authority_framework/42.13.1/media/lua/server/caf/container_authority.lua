@@ -9,9 +9,9 @@ local pairs = pairs
 local table_insert = table.insert
 
 local middleclass = pz_commons.kikito.middleclass
--- Localize for speed (Kahlua2 optimization)
 local EventManager = pz_utils.escape.EventManager
 local SafeLogger = pz_utils.escape.SafeLogger
+local SandboxVarsModule = pz_utils.escape.SandboxVarsModule
 
 -- Monkey-patch SafeLogger to support conditional logging if not present
 if not SafeLogger.shouldLog then
@@ -63,26 +63,32 @@ end
 ---Loads configuration from SandboxVars and sets up EventManager limits.
 ---Should be called during OnInitGlobalModData.
 function ContainerAuthority:loadConfig()
-	local sandboxVars = {
-		ValidationEventListenersMax = 25,
-		PreTransferEventListenersMax = 50,
-		PostTransferEventListenersMax = 100,
-	}
+	-- 1. Initialize SandboxVars Config using factory pattern
+	local cafSandbox
 
-	-- 1. Initialize SandboxVars Config
-	local SandboxVarsModule = pz_utils.escape.SandboxVarsModule
 	if SandboxVarsModule then
-		SandboxVarsModule.Init("ContainerAuthorityFramework", sandboxVars)
-
-		sandboxVars.ValidationEventListenersMax = SandboxVarsModule.Get("ValidationEventListenersMax", 25)
-		sandboxVars.PreTransferEventListenersMax = SandboxVarsModule.Get("PreTransferEventListenersMax", 50)
-		sandboxVars.PostTransferEventListenersMax = SandboxVarsModule.Get("PostTransferEventListenersMax", 100)
+		cafSandbox = SandboxVarsModule.Create("ContainerAuthorityFramework", {
+			ValidationEventListenersMax = 25,
+			PreTransferEventListenersMax = 50,
+			PostTransferEventListenersMax = 100,
+		})
 	end
 
-	-- 2. Apply Limits from Sandbox
-	EventManager.setMaxListeners(VALIDATION_EV, sandboxVars.ValidationEventListenersMax)
-	EventManager.setMaxListeners(PRE_TRANSFER_EV, sandboxVars.PreTransferEventListenersMax)
-	EventManager.setMaxListeners(POST_TRANSFER_EV, sandboxVars.PostTransferEventListenersMax)
+	-- 2. Retrieve values from sandbox or use defaults
+	local validationMax = 25
+	local preTransferMax = 50
+	local postTransferMax = 100
+
+	if cafSandbox then
+		validationMax = cafSandbox.Get("ValidationEventListenersMax", 25)
+		preTransferMax = cafSandbox.Get("PreTransferEventListenersMax", 50)
+		postTransferMax = cafSandbox.Get("PostTransferEventListenersMax", 100)
+	end
+
+	-- 3. Apply Limits from Sandbox
+	EventManager.setMaxListeners(VALIDATION_EV, validationMax)
+	EventManager.setMaxListeners(PRE_TRANSFER_EV, preTransferMax)
+	EventManager.setMaxListeners(POST_TRANSFER_EV, postTransferMax)
 
 	self.isReady = true
 	self:_processPendingRules()

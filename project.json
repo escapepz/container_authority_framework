@@ -13,7 +13,7 @@
         "container_authority_framework": {
             "name": "Container Authority Framework",
             "description": "",
-            "require": "\\pz_lua_commons"
+            "require": ["\\pz_lua_commons", "\\zul"]
         },
         "caf_example_rules": {
             "name": "Container Authority Framework Example Rules",
