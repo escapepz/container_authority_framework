@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/escapepz/project-zomboid-studio/refs/heads/b42.13.1/pzstudio.schema.json",
     "title": "Container Authority Framework",
-    "authors": [],
+    "authors": ["escapepz"],
     "workshop": {
         "visibility": "unlisted",
         "tags": ["Build 42"],
@@ -9,6 +9,8 @@
     },
     "mods": {
         "container_authority_framework": {
+            "author": "escapepz",
+            "modversion": "1.0.0",
             "versionMin": "42.13.1",
             "name": "Container Authority Framework",
             "description": "",

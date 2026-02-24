@@ -1,6 +1,7 @@
 ---@meta
 local pz_utils = require("pz_utils_shared")
 local pz_commons = require("pz_lua_commons_shared")
+local ZUL = require("zul")
 
 local pcall = pcall
 local tostring = tostring
@@ -10,25 +11,9 @@ local table_insert = table.insert
 
 local middleclass = pz_commons.kikito.middleclass
 local EventManager = pz_utils.escape.EventManager
-local SafeLogger = pz_utils.escape.SafeLogger
 local SandboxVarsModule = pz_utils.escape.SandboxVarsModule
 
--- Monkey-patch SafeLogger to support conditional logging if not present
-if not SafeLogger.shouldLog then
-	-- Try to reference ZUL to respect sandbox settings
-	local hasZUL, ZUL = pcall(require, "zul")
-
-	function SafeLogger.shouldLog(level)
-		local numericLevel = tonumber(level) or 30
-
-		if hasZUL and ZUL then
-			return ZUL.isLoggingEnabled("container_authority_framework", numericLevel)
-		end
-
-		-- Default threshold matches SafeLogger implementation (INFO = 30)
-		return numericLevel >= 30
-	end
-end
+local logger = ZUL.new("container_authority_framework")
 
 -- A single reusable table to prevent GC pressure
 local reusableContext = {
@@ -92,7 +77,7 @@ function ContainerAuthority:loadConfig()
 
 	self.isReady = true
 	self:_processPendingRules()
-	SafeLogger.log("[CAF] ContainerAuthority initialized and ready.", 30)
+	logger:info("ContainerAuthority initialized and ready.")
 end
 
 ---Internal: Registers all pending rules from the queue.
@@ -107,7 +92,7 @@ end
 ---Internal helper to actually register with EventManager
 function ContainerAuthority:_registerEvent(eventName, id, callback, priority)
 	EventManager.on(eventName, callback, priority)
-	SafeLogger.log("[CAF] Registered rule: " .. tostring(id) .. " (Priority: " .. tostring(priority or 0) .. ")", 30)
+	logger:info("Registered rule", { id = tostring(id), priority = tostring(priority or 0) })
 end
 
 ---Processes a transfer request through the 3-phase pipeline.
@@ -143,10 +128,7 @@ local function protectedTransferLogic(self, character, item, src, dest, original
 	EventManager.trigger(VALIDATION_EV, ctx)
 
 	if ctx.flags.rejected then
-		-- Only format string IF we are actually logging (Save string allocations)
-		if not SafeLogger.shouldLog or SafeLogger.shouldLog(40) then
-			SafeLogger.log("[CAF] Transfer rejected: " .. tostring(ctx.flags.reason or "Unknown reason"), 40)
-		end
+		logger:warn("Transfer rejected", { reason = ctx.flags.reason or "Unknown reason" })
 		return nil
 	end
 
@@ -185,7 +167,7 @@ function ContainerAuthority:processTransfer(character, item, src, dest, original
 	self._isProcessing = false
 
 	if not success then
-		SafeLogger.log("[CAF] Critical Error in processTransfer: " .. tostring(result), 50)
+		logger:error("Critical Error in processTransfer", { error = tostring(result) })
 		-- Optional: Re-throw if you want to hard-crash or notify vanilla error handler
 		-- error(result)
 		return nil
@@ -220,7 +202,7 @@ function ContainerAuthority:registerRule(phase, id, callback, priority)
 			callback = callback,
 			priority = priority,
 		})
-		SafeLogger.log("[CAF] Queued rule for registration: " .. tostring(id), 30)
+		logger:info("Queued rule for registration", { id = tostring(id) })
 	end
 end
 

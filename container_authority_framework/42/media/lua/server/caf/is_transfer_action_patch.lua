@@ -1,7 +1,6 @@
 local CAF = require("caf/container_authority")()
-local pz_utils = require("pz_utils_shared")
-local SafeLogger = pz_utils.escape.SafeLogger
-SafeLogger.init("container_authority_framework")
+local ZUL = require("zul")
+local logger = ZUL.new("container_authority_framework")
 
 local isServer, isMultiplayer = isServer, isMultiplayer
 
@@ -34,5 +33,5 @@ function ISTransferAction:transferItem(character, item, srcContainer, destContai
 end
 
 return function()
-	SafeLogger.log("[CAF] ISTransferAction:transferItem patched successfully.", 30)
+	logger:info("ISTransferAction:transferItem patched successfully.")
 end
