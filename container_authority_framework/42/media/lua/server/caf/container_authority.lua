@@ -16,13 +16,13 @@ local SandboxVarsModule = pz_utils.escape.SandboxVarsModule
 -- Monkey-patch SafeLogger to support conditional logging if not present
 if not SafeLogger.shouldLog then
 	-- Try to reference ZUL to respect sandbox settings
-	local hasZUL, ZUL = pcall(require, "ZUL")
+	local hasZUL, ZUL = pcall(require, "zul")
 
 	function SafeLogger.shouldLog(level)
 		local numericLevel = tonumber(level) or 30
 
 		if hasZUL and ZUL then
-			return ZUL.isLoggingEnabled("ContainerAuthority", numericLevel)
+			return ZUL.isLoggingEnabled("container_authority_framework", numericLevel)
 		end
 
 		-- Default threshold matches SafeLogger implementation (INFO = 30)
@@ -41,7 +41,7 @@ local VALIDATION_EV = "CAF:Validation"
 local PRE_TRANSFER_EV = "CAF:PreTransfer"
 local POST_TRANSFER_EV = "CAF:PostTransfer"
 
-SafeLogger.init("ContainerAuthority")
+SafeLogger.init("container_authority_framework")
 
 ---@class ContainerAuthority
 ---@field private _isProcessing boolean Recursion guard
@@ -227,8 +227,7 @@ end
 ---Engine Singleton Initialization
 local function init()
 	if not _G.ContainerAuthorityFramework then
-		_G.ContainerAuthorityFramework = ContainerAuthority:new()
-		_G.ContainerAuthorityFramework:initialize()
+		_G.ContainerAuthorityFramework = ContainerAuthority()
 
 		Events.OnInitGlobalModData.Add(function()
 			if _G.ContainerAuthorityFramework then

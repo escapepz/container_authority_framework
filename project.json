@@ -4,16 +4,15 @@
     "authors": [],
     "workshop": {
         "visibility": "unlisted",
-        "tags": [
-            "Build 42"
-        ],
+        "tags": ["Build 42"],
         "excludes": ["caf_example_rules"]
     },
     "mods": {
         "container_authority_framework": {
+            "versionMin": "42.13.1",
             "name": "Container Authority Framework",
             "description": "",
-            "require": ["\\pz_lua_commons", "\\zul"]
+            "require": ["\\zul", "\\pz_lua_commons"]
         },
         "caf_example_rules": {
             "name": "Container Authority Framework Example Rules",

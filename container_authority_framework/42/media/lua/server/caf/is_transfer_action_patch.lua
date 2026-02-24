@@ -1,7 +1,7 @@
 local CAF = require("caf/container_authority")()
 local pz_utils = require("pz_utils_shared")
 local SafeLogger = pz_utils.escape.SafeLogger
-SafeLogger.init("ContainerAuthority")
+SafeLogger.init("container_authority_framework")
 
 local isServer, isMultiplayer = isServer, isMultiplayer
 

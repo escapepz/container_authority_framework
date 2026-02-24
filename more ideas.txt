@@ -1,0 +1,62 @@
+💰 Category 6: Economy / Scarcity
+15️⃣ “Luxury Item Tax”
+
+Taking high-value items:
+
+Automatically consumes money item or tokens.
+
+CAF Layer:
+Pre-Transfer → validate payment
+Post-Transfer → deduct currency
+
+
+
+16️⃣ “Public Ration Crate”
+
+Each player can withdraw only one food item per day from tagged container.
+
+CAF Layer:
+Validation + daily counter.
+
+Very high MP adoption potential.
+
+
+
+
+
+
+🧪 Category 7: Chaotic / Meme Systems
+17️⃣ “Random Misplacement”
+
+Small % chance transferred item moves to random nearby container instead.
+
+CAF Layer:
+Post-Transfer → reroute target container.
+
+18️⃣ “Cursed Pantry”
+
+Removing last food item:
+
+Causes food poisoning debuff.
+
+CAF Layer:
+Post-Transfer → apply sickness.
+
+19️⃣ “Gremlin Container”
+
+Container randomly denies access with cryptic message.
+
+CAF Layer:
+Validation → random fail chance.
+
+20️⃣ “The Jealous Box”
+
+If a container hasn’t been accessed in X days:
+
+First access triggers loud noise.
+
+CAF Layer:
+Post-Transfer → time comparison.
+
+
+

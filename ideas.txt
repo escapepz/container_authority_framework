@@ -1,0 +1,236 @@
+2️⃣ “Greedy Hands Penalty”
+Concept
+
+If a player withdraws more than X items in one interaction:
+
+They drop one random item from inventory
+
+Or gain stress
+
+Viral Factor
+
+Punishes hoarders in a humorous way.
+
+CAF Layer
+
+Post-Transfer:
+
+Check quantity
+
+Trigger penalty
+
+
+8️⃣ “Rank-Locked Armory”
+Problem
+
+Faction servers need rank-restricted storage.
+
+Concept
+
+Containers enforce minimum rank requirement.
+
+CAF Usage
+
+Validation Rule
+
+if player.rank < requiredRank then deny
+
+
+No need for UI — simple numeric rank system.
+
+Complexity
+
+Low
+
+6️⃣ “Daily Withdrawal Cap”
+Problem
+
+Players empty public supply caches too quickly.
+
+Concept
+
+Limit number of items withdrawn per container per day per player.
+
+CAF Usage
+
+Validation Rule
+
+Track (player + container + day) counter
+
+Deny if exceeds limit
+
+Post-Transfer
+
+Increment counter
+
+Complexity
+
+Medium
+
+1️⃣ “One-Way Donation Box”
+Problem
+
+Community servers want donation containers that players can deposit into but never withdraw from.
+
+Concept
+
+Containers tagged as Donation only allow ADD operations.
+
+CAF Usage
+
+Validation Rule
+
+if container:hasTag("Donation") and action == REMOVE then
+    deny
+
+
+Optional:
+
+Log deposit amount
+
+Track top donors
+
+Complexity
+
+Very Low
+
+4️⃣ “Safehouse Guest Mode”
+Problem
+
+Vanilla safehouses are binary: full access or none.
+
+Concept
+
+Allow guests to deposit items but not withdraw.
+
+CAF Implementation
+
+Validation Rule
+
+if isSafehouse and player not owner:
+    if action == REMOVE then deny
+
+Use Case
+
+Cooperative servers
+
+RP servers with shared community storage
+
+Complexity
+
+Very Low
+
+Excellent CAF showcase for directional transfer logic.
+
+9️⃣ “Emotional Attachment”
+Concept
+
+If a container has been owned by a player for > X days:
+
+Removing items gives stress debuff to non-owner.
+
+Viral Factor
+
+“Why am I sad stealing this guy’s stuff?”
+
+CAF Layer
+
+Validation + Post penalty
+
+8️⃣ “Loot Echo”
+Concept
+
+Taking an item from a special container causes:
+
+Nearby zombie attraction pulse
+
+Viral Factor
+
+Streamer bait.
+
+CAF Layer
+
+Post-Transfer:
+
+Trigger sound event
+
+
+7️⃣ “Cold Hands Rule”
+Concept
+
+If player body temperature below threshold:
+
+Cannot transfer small items
+
+Increased transfer time
+
+Viral Factor
+
+Hardcore realism + frustration clips.
+
+CAF Layer
+
+Validation or Pre-Transfer delay modifier
+
+
+
+5️⃣ “Clumsy Survivor”
+Concept
+
+Low Nimble skill players have chance to:
+
+Drop transferred item on ground
+
+Make noise
+
+Viral Factor
+
+Funny fail moments.
+
+CAF Layer
+
+Post-Transfer:
+
+Random roll based on skill
+
+
+4️⃣ “Blood on the Storage”
+Concept
+
+If player has blood on hands and accesses container:
+
+Leaves visible blood stain
+
+Logs fingerprint (for RP investigation)
+
+Viral Factor
+
+Crime investigation roleplay clips.
+
+CAF Layer
+
+Post-Transfer:
+
+Add container metadata flag
+
+
+
+3️⃣ “Witnessed Theft System”
+Concept
+
+If another player is within X tiles and sees unauthorized transfer:
+
+Theft automatically broadcasts to local chat.
+
+Viral Factor
+
+Public shaming moments.
+
+CAF Layer
+
+Pre-Transfer:
+
+Scan nearby players
+
+Trigger message event
+
