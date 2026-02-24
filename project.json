@@ -4,7 +4,7 @@
     "authors": ["escapepz"],
     "workshop": {
         "visibility": "unlisted",
-        "tags": ["Build 42"],
+        "tags": ["Build 42", "Framework", "Multiplayer", "QoL"],
         "excludes": ["caf_example_rules"]
     },
     "mods": {
