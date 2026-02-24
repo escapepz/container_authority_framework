@@ -48,7 +48,7 @@ CAF intercepts item transfers through a three-phase pipeline:
 **Add to mod dependencies:**
 
 ```lua
-require = "\\container_authority_framework"
+require("container_authority_framework")
 ```
 
 ## Usage for Modders
