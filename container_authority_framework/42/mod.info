@@ -1,5 +1,12 @@
+author=escapepz
+
 id=container_authority_framework
 name=Container Authority Framework
+
 poster=poster.png
 icon=icon.png
-require=\pz_lua_commons
+
+modversion=1.0.0
+versionMin=42.13.1
+
+require=\zul,\pz_lua_commons

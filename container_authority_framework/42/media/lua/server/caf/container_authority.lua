@@ -26,8 +26,6 @@ local VALIDATION_EV = "CAF:Validation"
 local PRE_TRANSFER_EV = "CAF:PreTransfer"
 local POST_TRANSFER_EV = "CAF:PostTransfer"
 
-SafeLogger.init("container_authority_framework")
-
 ---@class ContainerAuthority
 ---@field private _isProcessing boolean Recursion guard
 ---@field private _rules table<string, table>

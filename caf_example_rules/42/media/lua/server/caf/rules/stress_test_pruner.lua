@@ -1,7 +1,7 @@
 local CAF = require("container_authority_framework")
 local pz_utils = require("pz_utils_shared")
 local SafeLogger = pz_utils.escape.SafeLogger
-SafeLogger.init("ContainerAuthority")
+SafeLogger.init("caf_example_rules")
 
 ---Dummy validation rule for stress testing the pruner
 local function createDummyValidator(ruleId)

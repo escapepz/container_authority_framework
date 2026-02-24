@@ -1,5 +1,12 @@
+author=escapepz
+
 id=caf_example_rules
 name=Container Authority Framework Example Rules
+
 poster=poster.png
 icon=icon.png
+
+modversion=1.0.0
+versionMin=42.13.1
+
 require=\container_authority_framework

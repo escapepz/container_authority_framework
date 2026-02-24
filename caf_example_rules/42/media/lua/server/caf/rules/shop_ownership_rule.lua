@@ -2,7 +2,7 @@ local CAF = require("container_authority_framework")
 local pz_utils = require("pz_utils_shared")
 local SafeLogger = pz_utils.escape.SafeLogger
 local KUtilities = pz_utils.konijima.Utilities
-SafeLogger.init("ContainerAuthority")
+SafeLogger.init("caf_example_rules")
 
 local tostring = tostring
 
