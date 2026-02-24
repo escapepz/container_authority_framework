@@ -24,6 +24,14 @@ end
 _G.isMultiplayer = function()
 	return false
 end
+_G.writeLog = function(category, message)
+	-- Capture logs for testing if needed
+	if not _G._testLogs then
+		---@diagnostic disable-next-line: global-in-non-module
+		_G._testLogs = {}
+	end
+	table.insert(_G._testLogs, { category = category, message = message })
+end
 
 -- 2. PZ Class Stubs
 -- InventoryItem

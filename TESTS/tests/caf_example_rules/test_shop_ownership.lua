@@ -4,12 +4,11 @@ package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/containe
 	.. package.path
 package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/caf_example_rules/42/media/lua/server/?.lua;"
 	.. package.path
-package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/.tmp/pz_lua_commons/common/media/lua/shared/?.lua;"
-	.. package.path
+package.path = "d:/DATA/2026/pz_tools/pz_lua_commons/pz_lua_commons/common/media/lua/shared/?.lua;" .. package.path
+package.path = "d:/DATA/2026/pz_mods_2026/zul/zul/42/media/lua/shared/?.lua;" .. package.path
 
 local TestRunner = require("test_framework")
 local mock_pz = require("mock_pz")
-local pz_utils = require("pz_utils_shared")
 
 -- Setup environment (Game Mocks)
 mock_pz.setupGlobalEnvironment()
