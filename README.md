@@ -45,10 +45,10 @@ CAF intercepts item transfers through a three-phase pipeline:
 - `zul` mod - [Zomboid Unified Logging](https://steamcommunity.com/sharedfiles/filedetails/?id=3653948326)
 - `pz_lua_commons` mod - [PZ Lua Commons](https://steamcommunity.com/sharedfiles/filedetails/?id=3672788969)
 
-**Add to mod dependencies:**
+**Add to `mod.info`**
 
-```lua
-require("container_authority_framework")
+```
+require=\container_authority_framework
 ```
 
 ## Usage for Modders
