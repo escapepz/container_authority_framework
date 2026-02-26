@@ -1,10 +1,12 @@
 -- tests/caf_example_rules/test_shop_ownership.lua
-package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/TESTS/tests/?.lua;" .. package.path
+package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/TESTS/tests/?.lua;"
+    .. package.path
 package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/container_authority_framework/42/media/lua/server/?.lua;"
-	.. package.path
+    .. package.path
 package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/caf_example_rules/42/media/lua/server/?.lua;"
-	.. package.path
-package.path = "d:/DATA/2026/pz_tools/pz_lua_commons/pz_lua_commons/common/media/lua/shared/?.lua;" .. package.path
+    .. package.path
+package.path = "d:/DATA/2026/pz_tools/pz_lua_commons/pz_lua_commons/common/media/lua/shared/?.lua;"
+    .. package.path
 package.path = "d:/DATA/2026/pz_mods_2026/zul/zul/42/media/lua/shared/?.lua;" .. package.path
 
 local TestRunner = require("test_framework")
@@ -17,7 +19,7 @@ mock_pz.setupGlobalEnvironment()
 _G.ContainerAuthorityFramework = nil
 
 -- Load Real CAF
-local CAF_Init = require("caf/container_authority")
+local CAF_Init = require("container_authority_framework/container_authority")
 local CAF = CAF_Init()
 
 -- SPY on CAF.registerRule to capture registrations for verification
@@ -26,117 +28,121 @@ local registeredSpy = {}
 local real_registerRule = CAF.registerRule
 
 function CAF:registerRule(phase, id, callback, priority)
-	table.insert(registeredSpy, {
-		phase = phase,
-		id = id,
-		callback = callback,
-		priority = priority,
-	})
-	-- Call the real implementation to ensure actual registration logic runs
-	real_registerRule(self, phase, id, callback, priority)
+    table.insert(registeredSpy, {
+        phase = phase,
+        id = id,
+        callback = callback,
+        priority = priority,
+    })
+    -- Call the real implementation to ensure actual registration logic runs
+    real_registerRule(self, phase, id, callback, priority)
 end
 
 -- Load the rule file
-local shop_ownership_rule = require("caf/rules/shop_ownership_rule")
+local shop_ownership_rule = require("container_authority_framework/rules/shop_ownership_rule")
 
 -- ============================================================================
 -- TESTS for Shop Ownership Rule
 -- ============================================================================
 
 TestRunner.register("ShopOwnership: Registers correctly via OnInitGlobalModData", function()
-	-- Reset spy and CAF state for test
-	registeredSpy = {}
-	CAF.pendingRules = {}
-	CAF.isReady = false
+    -- Reset spy and CAF state for test
+    registeredSpy = {}
+    CAF.pendingRules = {}
+    CAF.isReady = false
 
-	-- Call the rule's init wrapper
-	shop_ownership_rule()
+    -- Call the rule's init wrapper
+    shop_ownership_rule()
 
-	-- Trigger the init event to simulate game start
-	mock_pz.triggerOnInit()
+    -- Trigger the init event to simulate game start
+    mock_pz.triggerOnInit()
 
-	-- Verify via Spy
-	local found = false
-	for _, rule in ipairs(registeredSpy) do
-		if rule.id == "shop_ownership" and rule.phase == "validation" then
-			found = true
-			break
-		end
-	end
+    -- Verify via Spy
+    local found = false
+    for _, rule in ipairs(registeredSpy) do
+        if rule.id == "shop_ownership" and rule.phase == "validation" then
+            found = true
+            break
+        end
+    end
 
-	TestRunner.assert_true(found, "Shop ownership rule should be registered")
+    TestRunner.assert_true(found, "Shop ownership rule should be registered")
 end)
 
 TestRunner.register("ShopOwnership: Logic prevents theft", function()
-	-- Setup context
-	local thief = mock_pz.IsoPlayer.new("Thief")
-	local shopOwner = mock_pz.IsoPlayer.new("ShopOwner")
+    -- Setup context
+    local thief = mock_pz.IsoPlayer.new("Thief")
+    local shopOwner = mock_pz.IsoPlayer.new("ShopOwner")
 
-	local shopContainerObj = mock_pz.IsoObject.new()
-	shopContainerObj._modData.shopOwner = "ShopOwner"
+    local shopContainerObj = mock_pz.IsoObject.new()
+    shopContainerObj._modData.shopOwner = "ShopOwner"
 
-	local container = mock_pz.ItemContainer.new("crate", shopContainerObj)
-	local item = mock_pz.InventoryItem.new("Base.Apple")
+    local container = mock_pz.ItemContainer.new("crate", shopContainerObj)
+    local item = mock_pz.InventoryItem.new("Base.Apple")
 
-	local context = {
-		character = thief,
-		item = item,
-		src = container,
-		flags = { rejected = false, reason = nil },
-	}
+    local context = {
+        character = thief,
+        item = item,
+        src = container,
+        flags = { rejected = false, reason = nil },
+    }
 
-	-- Capture the callback
-	registeredSpy = {}
-	CAF.pendingRules = {}
-	CAF.isReady = false
+    -- Capture the callback
+    registeredSpy = {}
+    CAF.pendingRules = {}
+    CAF.isReady = false
 
-	shop_ownership_rule()
-	mock_pz.triggerOnInit()
+    shop_ownership_rule()
+    mock_pz.triggerOnInit()
 
-	local registeredCallback = nil
-	for _, rule in ipairs(registeredSpy) do
-		if rule.id == "shop_ownership" then
-			registeredCallback = rule.callback
-		end
-	end
+    local registeredCallback = nil
+    for _, rule in ipairs(registeredSpy) do
+        if rule.id == "shop_ownership" then
+            registeredCallback = rule.callback
+        end
+    end
 
-	TestRunner.assert_not_nil(registeredCallback, "Callback must be captured")
+    TestRunner.assert_not_nil(registeredCallback, "Callback must be captured")
 
-	---@diagnostic disable-next-line: need-check-nil
-	-- Run validation logic
-	registeredCallback(context)
+    ---@diagnostic disable-next-line: need-check-nil
+    -- Run validation logic
+    registeredCallback(context)
 
-	TestRunner.assert_true(context.flags.rejected, "Should reject transfer from unowned shop")
-	TestRunner.assert_equals(context.flags.reason, "This item belongs to ShopOwner's shop.", "Reason should match")
+    TestRunner.assert_true(context.flags.rejected, "Should reject transfer from unowned shop")
+    TestRunner.assert_equals(
+        context.flags.reason,
+        "This item belongs to ShopOwner's shop.",
+        "Reason should match"
+    )
 end)
 
 TestRunner.register("ShopOwnership: Allows owner access", function()
-	local owner = mock_pz.IsoPlayer.new("ShopOwner")
-	local shopContainerObj = mock_pz.IsoObject.new()
-	shopContainerObj._modData.shopOwner = "ShopOwner"
+    local owner = mock_pz.IsoPlayer.new("ShopOwner")
+    local shopContainerObj = mock_pz.IsoObject.new()
+    shopContainerObj._modData.shopOwner = "ShopOwner"
 
-	local container = mock_pz.ItemContainer.new("crate", shopContainerObj)
-	local item = mock_pz.InventoryItem.new("Base.Apple")
+    local container = mock_pz.ItemContainer.new("crate", shopContainerObj)
+    local item = mock_pz.InventoryItem.new("Base.Apple")
 
-	local context = {
-		character = owner,
-		item = item,
-		src = container,
-		flags = { rejected = false },
-	}
+    local context = {
+        character = owner,
+        item = item,
+        src = container,
+        flags = { rejected = false },
+    }
 
-	-- Get callback
-	local registeredCallback = nil
-	for _, rule in ipairs(registeredSpy) do
-		if rule.id == "shop_ownership" then
-			registeredCallback = rule.callback
-		end
-	end
+    -- Get callback
+    local registeredCallback = nil
+    for _, rule in ipairs(registeredSpy) do
+        if rule.id == "shop_ownership" then
+            registeredCallback = rule.callback
+        end
+    end
 
-	---@diagnostic disable-next-line: need-check-nil
-	registeredCallback(context)
+    ---@diagnostic disable-next-line: need-check-nil
+    registeredCallback(context)
 
-	TestRunner.assert_true(not context.flags.rejected, "Should allow owner access")
+    TestRunner.assert_true(not context.flags.rejected, "Should allow owner access")
 end)
 
 TestRunner.run()

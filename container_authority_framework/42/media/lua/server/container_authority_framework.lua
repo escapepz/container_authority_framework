@@ -1,4 +1,4 @@
--- Container Authority Framework (CAF) Shared Initialization
+-- Container Authority Framework (CAF) Server Initialization
 local caf = require("container_authority_framework/container_authority")()
 require("container_authority_framework/is_transfer_action_patch")()
 
