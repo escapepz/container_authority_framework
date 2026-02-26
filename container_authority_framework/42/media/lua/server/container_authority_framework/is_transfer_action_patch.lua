@@ -1,4 +1,4 @@
-local CAF = require("caf/container_authority")()
+local CAF = require("container_authority_framework/container_authority")()
 local ZUL = require("zul")
 local logger = ZUL.new("container_authority_framework")
 

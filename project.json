@@ -3,6 +3,7 @@
     "title": "Container Authority Framework",
     "authors": ["escapepz"],
     "workshop": {
+        "id": 3672918592,
         "visibility": "unlisted",
         "tags": ["Build 42", "Framework", "Multiplayer", "QoL"],
         "excludes": ["caf_example_rules"]
@@ -10,7 +11,7 @@
     "mods": {
         "container_authority_framework": {
             "author": "escapepz",
-            "modversion": "1.0.0",
+            "modversion": "1.0.1",
             "versionMin": "42.13.1",
             "name": "Container Authority Framework",
             "description": "",

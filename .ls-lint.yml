@@ -1,0 +1,10 @@
+# .ls-lint.yml
+ls:
+  .lua: snake_case
+  # This matches snake_case OR the exact string 'sandbox-options'
+  .txt: regex:([a-z0-9_]+|sandbox-options)
+
+ignore:
+  - .git
+  - node_modules
+  - .*/ # This ignores all directories starting with a dot

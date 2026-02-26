@@ -12,7 +12,10 @@ A modding framework that lets creators build custom storage rules and container 
 
 [b]What it provides:[/b]
 [list]
-[*]Three-phase transfer pipeline - Validation (block transfers), Pre-Transfer (audit/modify), and Post-Transfer (side effects) hooks for container interactions
+[*]Three-phase transfer pipeline hooks for container interactions
+- Validation (block transfers)
+- Pre-Transfer (audit/modify)
+- Post-Transfer (side effects)
 [*]Priority-based rule registration - Multiple mods can add rules without conflicting
 [*]Sandbox performance controls - Server admins can configure listener limits to prevent lag
 [*]Event-driven architecture - Rules trigger automatically when players move items between containers

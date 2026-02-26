@@ -1,0 +1,11 @@
+# .styluaignore
+.codebase/
+.docs/
+.libraries/
+
+.template-language/
+.template-mod/
+.tmp/
+
+.vscode/
+.serena/
