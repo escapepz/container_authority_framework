@@ -9,9 +9,10 @@ local tostring = tostring
 
 ---Validation rule to prevent players from taking items from shop containers they don't own.
 local function validateShopOwnership(context)
-    local item = context.item
-    local src = context.src
-    local character = context.character
+    local item = context.item ---@type InventoryItem
+    local src = context.src ---@type ItemContainer
+    local dest = context.dest ---@type ItemContainer
+    local character = context.character ---@type IsoPlayer
 
     -- Admin override
     -- if KUtilities.IsPlayerAdmin(character) then
@@ -22,15 +23,25 @@ local function validateShopOwnership(context)
     -- 	return
     -- end
 
+    safe_logger:log(
+        "should run here when ever container transfer src " .. tostring(src:getType()),
+        30
+    )
+
+    safe_logger:log(
+        "should run here when ever container transfer dest " .. tostring(dest:getType()),
+        30
+    )
+
     -- Check if source container belongs to a shop
-    local parent = src:getParent()
-    if parent and parent:getModData() and parent:getModData().shopOwner then
-        local owner = parent:getModData().shopOwner
-        if owner ~= character:getUsername() then
-            context.flags.rejected = true
-            context.flags.reason = "This item belongs to " .. tostring(owner) .. "'s shop."
-        end
-    end
+    -- local parent = src:getParent()
+    -- if parent and parent:getModData() and parent:getModData().shopOwner then
+    -- local owner = parent:getModData().shopOwner
+    --     if owner ~= character:getUsername() then
+    context.flags.rejected = true
+    context.flags.reason = "This item belongs to a shop."
+    -- end
+    -- end
 end
 
 return function()
@@ -42,8 +53,10 @@ return function()
         return
     end
 
-    -- Register the rule
-    CAF:registerRule("validation", "shop_ownership", validateShopOwnership, 100)
+    if KUtilities.IsServerOrSinglePlayer() then
+        -- Register the rule
+        CAF:registerRule("validation", "shop_ownership", validateShopOwnership, 100)
 
-    safe_logger:log("[CAF] Shop Ownership Rule loaded.", 30)
+        safe_logger:log("[CAF] Shop Ownership Rule loaded.", 30)
+    end
 end

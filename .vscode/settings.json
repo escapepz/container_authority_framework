@@ -6,5 +6,10 @@
     "[lua]": {
         "editor.defaultFormatter": "JohnnyMorganz.stylua",
     },
-    "lua.debug.settings.luaVersion": "lua51"
+    "lua.debug.settings.luaVersion": "lua51",
+    "cSpell.words": [
+        "kikito",
+        "konijima",
+        "middleclass"
+    ]
 }

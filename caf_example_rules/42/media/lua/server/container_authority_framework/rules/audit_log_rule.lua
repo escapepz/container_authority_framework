@@ -1,6 +1,7 @@
 local CAF = require("container_authority_framework")
 local pz_utils = require("pz_utils_shared")
 local SafeLogger = pz_utils.escape.SafeLogger
+local KUtilities = pz_utils.konijima.Utilities
 
 local safe_logger = SafeLogger.new("caf_example_rules")
 
@@ -26,7 +27,7 @@ local function logTransfer(context)
             .. tostring(srcName)
             .. " to "
             .. tostring(destName),
-        20
+        30
     )
 end
 
@@ -36,8 +37,10 @@ return function()
         return
     end
 
-    -- Register the rule
-    CAF:registerRule("post", "audit_log", logTransfer, 500)
+    if KUtilities.IsServerOrSinglePlayer() then
+        -- Register the rule
+        CAF:registerRule("post", "audit_log", logTransfer, 500)
 
-    safe_logger:log("[CAF] Audit Log Rule loaded.", 30)
+        safe_logger:log("[CAF] Audit Log Rule loaded.", 30)
+    end
 end

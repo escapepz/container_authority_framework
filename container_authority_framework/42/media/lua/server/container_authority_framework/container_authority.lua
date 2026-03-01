@@ -17,8 +17,8 @@ local logger = ZUL.new("container_authority_framework")
 
 -- A single reusable table to prevent GC pressure
 local reusableContext = {
-	flags = { rejected = false, reason = nil, adminOverride = false },
-	metadata = {},
+    flags = { rejected = false, reason = nil, adminOverride = false },
+    metadata = {},
 }
 
 -- Localize strings for hot-path performance
@@ -35,62 +35,62 @@ local POST_TRANSFER_EV = "CAF:PostTransfer"
 local ContainerAuthority = middleclass("ContainerAuthority")
 
 function ContainerAuthority:initialize()
-	self._isProcessing = false
-	self.ValidationEvent = VALIDATION_EV
-	self.PreTransferEvent = PRE_TRANSFER_EV
-	self.PostTransferEvent = POST_TRANSFER_EV
-	self.isReady = false
-	self.pendingRules = {} -- Queue for early registrations
+    self._isProcessing = false
+    self.ValidationEvent = VALIDATION_EV
+    self.PreTransferEvent = PRE_TRANSFER_EV
+    self.PostTransferEvent = POST_TRANSFER_EV
+    self.isReady = false
+    self.pendingRules = {} -- Queue for early registrations
 end
 
 ---Loads configuration from SandboxVars and sets up EventManager limits.
 ---Should be called during OnInitGlobalModData.
 function ContainerAuthority:loadConfig()
-	-- 1. Initialize SandboxVars Config using factory pattern
-	local cafSandbox
+    -- 1. Initialize SandboxVars Config using factory pattern
+    local cafSandbox
 
-	if SandboxVarsModule then
-		cafSandbox = SandboxVarsModule.Create("ContainerAuthorityFramework", {
-			ValidationEventListenersMax = 25,
-			PreTransferEventListenersMax = 50,
-			PostTransferEventListenersMax = 100,
-		})
-	end
+    if SandboxVarsModule then
+        cafSandbox = SandboxVarsModule.Create("ContainerAuthorityFramework", {
+            ValidationEventListenersMax = 25,
+            PreTransferEventListenersMax = 50,
+            PostTransferEventListenersMax = 100,
+        })
+    end
 
-	-- 2. Retrieve values from sandbox or use defaults
-	local validationMax = 25
-	local preTransferMax = 50
-	local postTransferMax = 100
+    -- 2. Retrieve values from sandbox or use defaults
+    local validationMax = 25
+    local preTransferMax = 50
+    local postTransferMax = 100
 
-	if cafSandbox then
-		validationMax = cafSandbox.Get("ValidationEventListenersMax", 25)
-		preTransferMax = cafSandbox.Get("PreTransferEventListenersMax", 50)
-		postTransferMax = cafSandbox.Get("PostTransferEventListenersMax", 100)
-	end
+    if cafSandbox then
+        validationMax = cafSandbox.Get("ValidationEventListenersMax", 25)
+        preTransferMax = cafSandbox.Get("PreTransferEventListenersMax", 50)
+        postTransferMax = cafSandbox.Get("PostTransferEventListenersMax", 100)
+    end
 
-	-- 3. Apply Limits from Sandbox
-	EventManager.setMaxListeners(VALIDATION_EV, validationMax)
-	EventManager.setMaxListeners(PRE_TRANSFER_EV, preTransferMax)
-	EventManager.setMaxListeners(POST_TRANSFER_EV, postTransferMax)
+    -- 3. Apply Limits from Sandbox
+    EventManager.setMaxListeners(VALIDATION_EV, validationMax)
+    EventManager.setMaxListeners(PRE_TRANSFER_EV, preTransferMax)
+    EventManager.setMaxListeners(POST_TRANSFER_EV, postTransferMax)
 
-	self.isReady = true
-	self:_processPendingRules()
-	logger:info("ContainerAuthority initialized and ready.")
+    self.isReady = true
+    self:_processPendingRules()
+    logger:info("ContainerAuthority initialized and ready.")
 end
 
 ---Internal: Registers all pending rules from the queue.
 function ContainerAuthority:_processPendingRules()
-	for _, rule in pairs(self.pendingRules) do
-		self:_registerEvent(rule.eventName, rule.id, rule.callback, rule.priority)
-	end
-	-- Clear queue to free memory
-	self.pendingRules = {}
+    for _, rule in pairs(self.pendingRules) do
+        self:_registerEvent(rule.eventName, rule.id, rule.callback, rule.priority)
+    end
+    -- Clear queue to free memory
+    self.pendingRules = {}
 end
 
 ---Internal helper to actually register with EventManager
 function ContainerAuthority:_registerEvent(eventName, id, callback, priority)
-	EventManager.on(eventName, callback, priority)
-	logger:info("Registered rule", { id = tostring(id), priority = tostring(priority or 0) })
+    EventManager.on(eventName, callback, priority)
+    logger:info("Registered rule", { id = tostring(id), priority = tostring(priority or 0) })
 end
 
 ---Processes a transfer request through the 3-phase pipeline.
@@ -103,45 +103,48 @@ end
 ---@return any The result of the original transfer function or nil if rejected.
 -- Internal protected function to avoid closure allocations in pcall
 local function protectedTransferLogic(self, character, item, src, dest, originalFunc, dropSquare)
-	-- Update reusable object instead of allocating {}
-	local ctx = reusableContext
-	ctx.character = character
-	ctx.item = item
-	ctx.src = src
-	ctx.dest = dest
-	ctx.dropSquare = dropSquare
+    -- Update reusable object instead of allocating {}
+    local ctx = reusableContext
+    ctx.character = character
+    ctx.item = item
+    ctx.src = src
+    ctx.dest = dest
+    ctx.dropSquare = dropSquare
 
-	-- Reset flags
-	local flags = ctx.flags
-	flags.rejected = false
-	flags.reason = nil
-	flags.adminOverride = false
+    -- Reset flags
+    local flags = ctx.flags
+    flags.rejected = false
+    flags.reason = nil
+    flags.adminOverride = false
 
-	-- Reset metadata (efficient clearing)
-	for k in pairs(ctx.metadata) do
-		ctx.metadata[k] = nil
-	end
+    -- Reset metadata (efficient clearing)
+    for k in pairs(ctx.metadata) do
+        ctx.metadata[k] = nil
+    end
 
-	-- 1. VALIDATION PHASE (Blocking)
-	EventManager.trigger(VALIDATION_EV, ctx)
+    -- 1. VALIDATION PHASE (Blocking)
+    EventManager.trigger(VALIDATION_EV, ctx)
 
-	if ctx.flags.rejected then
-		logger:warn("Transfer rejected", { reason = ctx.flags.reason or "Unknown reason" })
-		return nil
-	end
+    if ctx.flags.rejected then
+        logger:warn("Transfer rejected", { reason = ctx.flags.reason or "Unknown reason" })
+        return nil
+    end
 
-	-- 2. PRE-TRANSFER PHASE (Mutation/Auditing)
-	EventManager.trigger(PRE_TRANSFER_EV, ctx)
+    -- 2. PRE-TRANSFER PHASE (Mutation/Auditing)
+    EventManager.trigger(PRE_TRANSFER_EV, ctx)
 
-	-- 3. EXECUTION
-	-- Direct call with explicit args is faster than ... or unpack(args)
-	local result = originalFunc(self, character, item, src, dest, dropSquare)
+    logger:debug("after pre transfer " .. tostring(ctx.flags.rejected))
+    logger:debug("item", { item, src, dest })
 
-	-- 4. POST-TRANSFER PHASE (Reaction/Side-effects)
-	ctx.result = result
-	EventManager.trigger(POST_TRANSFER_EV, ctx)
+    -- 3. EXECUTION
+    -- Direct call with explicit args is faster than ... or unpack(args)
+    local result = originalFunc(self, character, item, src, dest, dropSquare)
 
-	return result
+    -- 4. POST-TRANSFER PHASE (Reaction/Side-effects)
+    ctx.result = result
+    EventManager.trigger(POST_TRANSFER_EV, ctx)
+
+    return result
 end
 
 ---Processes a transfer request through the 3-phase pipeline.
@@ -153,25 +156,26 @@ end
 ---@param dropSquare IsoGridSquare|nil Optional square to drop the item on.
 ---@return any The result of the original transfer function or nil if rejected.
 function ContainerAuthority:processTransfer(character, item, src, dest, originalFunc, dropSquare)
-	if self._isProcessing then
-		return originalFunc(self, character, item, src, dest, dropSquare)
-	end
+    if self._isProcessing then
+        return originalFunc(self, character, item, src, dest, dropSquare)
+    end
 
-	self._isProcessing = true
+    self._isProcessing = true
 
-	-- Wrap in pcall to ensure recursion guard is ALWAYS released, even on error
-	local success, result = pcall(protectedTransferLogic, self, character, item, src, dest, originalFunc, dropSquare)
+    -- Wrap in pcall to ensure recursion guard is ALWAYS released, even on error
+    local success, result =
+        pcall(protectedTransferLogic, self, character, item, src, dest, originalFunc, dropSquare)
 
-	self._isProcessing = false
+    self._isProcessing = false
 
-	if not success then
-		logger:error("Critical Error in processTransfer", { error = tostring(result) })
-		-- Optional: Re-throw if you want to hard-crash or notify vanilla error handler
-		-- error(result)
-		return nil
-	end
+    if not success then
+        logger:error("Critical Error in processTransfer", { error = tostring(result) })
+        -- Optional: Re-throw if you want to hard-crash or notify vanilla error handler
+        -- error(result)
+        return nil
+    end
 
-	return result
+    return result
 end
 
 ---Registers a rule for a specific phase.
@@ -180,44 +184,44 @@ end
 ---@param callback function The rule logic.
 ---@param priority number The priority (lower = earlier).
 function ContainerAuthority:registerRule(phase, id, callback, priority)
-	local eventName
-	if phase == "validation" then
-		eventName = VALIDATION_EV
-	elseif phase == "pre" then
-		eventName = PRE_TRANSFER_EV
-	elseif phase == "post" then
-		eventName = POST_TRANSFER_EV
-	else
-		error("Invalid CAF phase: " .. tostring(phase))
-	end
+    local eventName
+    if phase == "validation" then
+        eventName = VALIDATION_EV
+    elseif phase == "pre" then
+        eventName = PRE_TRANSFER_EV
+    elseif phase == "post" then
+        eventName = POST_TRANSFER_EV
+    else
+        error("Invalid CAF phase: " .. tostring(phase))
+    end
 
-	if self.isReady then
-		self:_registerEvent(eventName, id, callback, priority)
-	else
-		table_insert(self.pendingRules, {
-			eventName = eventName,
-			id = id,
-			callback = callback,
-			priority = priority,
-		})
-		logger:info("Queued rule for registration", { id = tostring(id) })
-	end
+    if self.isReady then
+        self:_registerEvent(eventName, id, callback, priority)
+    else
+        table_insert(self.pendingRules, {
+            eventName = eventName,
+            id = id,
+            callback = callback,
+            priority = priority,
+        })
+        logger:info("Queued rule for registration", { id = tostring(id) })
+    end
 end
 
 ---Engine Singleton Initialization
 local function init()
-	if not _G.ContainerAuthorityFramework then
-		_G.ContainerAuthorityFramework = ContainerAuthority()
+    if not _G.ContainerAuthorityFramework then
+        _G.ContainerAuthorityFramework = ContainerAuthority()
 
-		Events.OnInitGlobalModData.Add(function()
-			if _G.ContainerAuthorityFramework then
-				-- This is where the queue is processed and isReady becomes true
-				_G.ContainerAuthorityFramework:loadConfig()
-			end
-		end)
-	end
+        Events.OnInitGlobalModData.Add(function()
+            if _G.ContainerAuthorityFramework then
+                -- This is where the queue is processed and isReady becomes true
+                _G.ContainerAuthorityFramework:loadConfig()
+            end
+        end)
+    end
 
-	return _G.ContainerAuthorityFramework
+    return _G.ContainerAuthorityFramework
 end
 
 return init
