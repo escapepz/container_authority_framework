@@ -85,11 +85,9 @@ return function()
         return
     end
 
-    if KUtilities.IsServerOrSinglePlayer() then
-        -- Register the rule
-        CAF:registerRule("validation", "shop_ownership", validateShopOwnership, 100)
-        CAF:registerRule("pre", "shop_ownership", preTransfer, 100)
+    -- Register the rule
+    CAF:registerRule("validation", "shop_ownership", validateShopOwnership, 100)
+    CAF:registerRule("pre", "shop_ownership", preTransfer, 100)
 
-        safe_logger:log("[CAF] Shop Ownership Rule loaded.", 30)
-    end
+    safe_logger:log("[CAF] Shop Ownership Rule loaded.", 30)
 end

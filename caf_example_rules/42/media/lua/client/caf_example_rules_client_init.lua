@@ -1,3 +1,9 @@
+-- CAF Example Rules Initialization
+-- Client/SP only rules
+require("caf_example_rules/rules/shop_ownership_rule")()
+require("caf_example_rules/rules/audit_log_rule")()
+-- require("container_authority_framework/rules/stress_test_pruner")()
+
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
 
