@@ -58,15 +58,20 @@ TestRunner.register("ShopOwnership: Registers correctly via OnInitGlobalModData"
     mock_pz.triggerOnInit()
 
     -- Verify via Spy
-    local found = false
+    local foundValidation = false
+    local foundPre = false
     for _, rule in ipairs(registeredSpy) do
-        if rule.id == "shop_ownership" and rule.phase == "validation" then
-            found = true
-            break
+        if rule.id == "shop_ownership" then
+            if rule.phase == "validation" then
+                foundValidation = true
+            elseif rule.phase == "pre" then
+                foundPre = true
+            end
         end
     end
 
-    TestRunner.assert_true(found, "Shop ownership rule should be registered")
+    TestRunner.assert_true(foundValidation, "Shop ownership validation rule should be registered")
+    TestRunner.assert_true(foundPre, "Shop ownership pre-transfer rule should be registered")
 end)
 
 TestRunner.register("ShopOwnership: Logic prevents theft", function()
@@ -80,11 +85,15 @@ TestRunner.register("ShopOwnership: Logic prevents theft", function()
     local container = mock_pz.ItemContainer.new("crate", shopContainerObj)
     local item = mock_pz.InventoryItem.new("Base.Apple")
 
+    local destContainer = mock_pz.ItemContainer.new("inventory", nil)
+
     local context = {
         character = thief,
         item = item,
         src = container,
+        dest = destContainer,
         flags = { rejected = false, reason = nil },
+        metadata = {},
     }
 
     -- Capture the callback
@@ -95,18 +104,18 @@ TestRunner.register("ShopOwnership: Logic prevents theft", function()
     shop_ownership_rule()
     mock_pz.triggerOnInit()
 
-    local registeredCallback = nil
+    local validationCallback = nil
     for _, rule in ipairs(registeredSpy) do
-        if rule.id == "shop_ownership" then
-            registeredCallback = rule.callback
+        if rule.id == "shop_ownership" and rule.phase == "validation" then
+            validationCallback = rule.callback
         end
     end
 
-    TestRunner.assert_not_nil(registeredCallback, "Callback must be captured")
+    TestRunner.assert_not_nil(validationCallback, "Validation callback must be captured")
 
     ---@diagnostic disable-next-line: need-check-nil
     -- Run validation logic
-    registeredCallback(context)
+    validationCallback(context)
 
     TestRunner.assert_true(context.flags.rejected, "Should reject transfer from unowned shop")
     TestRunner.assert_equals(
@@ -124,23 +133,29 @@ TestRunner.register("ShopOwnership: Allows owner access", function()
     local container = mock_pz.ItemContainer.new("crate", shopContainerObj)
     local item = mock_pz.InventoryItem.new("Base.Apple")
 
+    local destContainer = mock_pz.ItemContainer.new("inventory", nil)
+
     local context = {
         character = owner,
         item = item,
         src = container,
+        dest = destContainer,
         flags = { rejected = false },
+        metadata = {},
     }
 
     -- Get callback
-    local registeredCallback = nil
+    local validationCallback = nil
     for _, rule in ipairs(registeredSpy) do
-        if rule.id == "shop_ownership" then
-            registeredCallback = rule.callback
+        if rule.id == "shop_ownership" and rule.phase == "validation" then
+            validationCallback = rule.callback
         end
     end
 
+    TestRunner.assert_not_nil(validationCallback, "Validation callback must be present")
+
     ---@diagnostic disable-next-line: need-check-nil
-    registeredCallback(context)
+    validationCallback(context)
 
     TestRunner.assert_true(not context.flags.rejected, "Should allow owner access")
 end)

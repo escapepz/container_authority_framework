@@ -18,6 +18,15 @@
             "cwd": "${workspaceFolder}/TESTS/tests",
             "stopOnEntry": false,
             "luaVersion": "lua51"
+        },
+        {
+            "name": "Debug Environment Loading Tests",
+            "type": "lua",
+            "request": "launch",
+            "program": "${workspaceFolder}/TESTS/tests/test_environment_loading.lua",
+            "cwd": "${workspaceFolder}/TESTS/tests",
+            "stopOnEntry": false,
+            "luaVersion": "lua51"
         }
     ]
 }

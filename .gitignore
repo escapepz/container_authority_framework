@@ -8,6 +8,8 @@
 .template-mod
 .template-language
 
+node_modules
+
 Logs/
 tmp/
 

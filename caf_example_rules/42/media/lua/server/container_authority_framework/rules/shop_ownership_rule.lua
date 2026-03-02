@@ -23,25 +23,57 @@ local function validateShopOwnership(context)
     -- 	return
     -- end
 
-    safe_logger:log(
-        "should run here when ever container transfer src " .. tostring(src:getType()),
-        30
-    )
-
-    safe_logger:log(
-        "should run here when ever container transfer dest " .. tostring(dest:getType()),
-        30
-    )
-
     -- Check if source container belongs to a shop
-    -- local parent = src:getParent()
-    -- if parent and parent:getModData() and parent:getModData().shopOwner then
-    -- local owner = parent:getModData().shopOwner
-    --     if owner ~= character:getUsername() then
-    context.flags.rejected = true
-    context.flags.reason = "This item belongs to a shop."
-    -- end
-    -- end
+    local parent = src:getParent()
+    if parent and parent:getModData() and parent:getModData().shopOwner then
+        local owner = parent:getModData().shopOwner
+        if owner ~= character:getUsername() then
+            context.flags.rejected = true
+            context.flags.reason = "This item belongs to " .. tostring(owner) .. "'s shop."
+        end
+    end
+end
+
+-- | Container Logic     | Lua Check                                                                    |
+-- | ------------------- | ---------------------------------------------------------------------------- |
+-- | **Player Main Inv** | `container == character:getInventory()`                                      |
+-- | **Backpack (Worn)** | `instanceof(container:getParent(), "IsoPlayer")`                             |
+-- | **Corpse**          | `container:isCorpse()` OR `instanceof(container:getParent(), "IsoDeadBody")` |
+-- | **Floor**           | `container:getType() == "floor"`                                             |
+-- | **Vehicle Trunk**   | `instanceof(container:getParent(), "BaseVehicle")`                           |
+-- | **Crate / Shelf**   | `instanceof(container:getParent(), "IsoObject")`                             |
+
+local function preTransfer(context)
+    local item = context.item ---@type InventoryItem
+    local src = context.src ---@type ItemContainer
+    local dest = context.dest ---@type ItemContainer
+    local character = context.character ---@type IsoPlayer
+
+    -- Parent Objects
+    local srcParent = src:getParent()
+    local destParent = dest:getParent()
+
+    -- Identification Logic
+    local srcIsPlayer = instanceof(srcParent, "IsoPlayer")
+    local destIsPlayer = instanceof(destParent, "IsoPlayer")
+
+    local srcIsCorpse = src:isCorpse() or instanceof(srcParent, "IsoDeadBody")
+    local destIsCorpse = dest:isCorpse() or instanceof(destParent, "IsoDeadBody")
+
+    local srcIsFloor = src:getType() == "floor"
+    local destIsFloor = dest:getType() == "floor"
+
+    -- Logging
+    safe_logger:log("--- Transfer Source ---", 30)
+    safe_logger:log("Is Player: " .. tostring(srcIsPlayer), 30)
+    safe_logger:log("Is Corpse: " .. tostring(srcIsCorpse), 30)
+    safe_logger:log("Is Floor: " .. tostring(srcIsFloor), 30)
+    safe_logger:log("Type: " .. tostring(src:getType()), 30)
+
+    safe_logger:log("--- Transfer Destination ---", 30)
+    safe_logger:log("Is Player: " .. tostring(destIsPlayer), 30)
+    safe_logger:log("Is Corpse: " .. tostring(destIsCorpse), 30)
+    safe_logger:log("Is Floor: " .. tostring(destIsFloor), 30)
 end
 
 return function()
@@ -56,6 +88,7 @@ return function()
     if KUtilities.IsServerOrSinglePlayer() then
         -- Register the rule
         CAF:registerRule("validation", "shop_ownership", validateShopOwnership, 100)
+        CAF:registerRule("pre", "shop_ownership", preTransfer, 100)
 
         safe_logger:log("[CAF] Shop Ownership Rule loaded.", 30)
     end

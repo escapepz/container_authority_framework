@@ -1,0 +1,10 @@
+# https://lefthook.dev/configuration/
+pre-commit:
+  parallel: true
+  jobs:
+    - name: ls-lint
+      run: pnpm exec ls-lint
+
+    - name: stylua
+      glob: "*.lua"
+      run: pnpm exec stylua -c {staged_files}

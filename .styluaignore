@@ -9,3 +9,7 @@
 
 .vscode/
 .serena/
+
+.github/
+
+node_modules/
