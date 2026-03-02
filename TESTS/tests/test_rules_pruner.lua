@@ -1,11 +1,13 @@
 -- tests/test_rules_pruner.lua
-package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/TESTS/tests/?.lua;"
+local testDir = debug.getinfo(1).source:match("@?(.*/)")
+package.path = testDir .. "?.lua;" .. package.path
+package.path = testDir
+    .. "../../container_authority_framework/42/media/lua/shared/?.lua;"
     .. package.path
-package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/container_authority_framework/42/media/lua/server/?.lua;"
+package.path = testDir
+    .. "../../../../pz_tools/pz_lua_commons/pz_lua_commons/common/media/lua/shared/?.lua;"
     .. package.path
-package.path = "d:/DATA/2026/pz_tools/pz_lua_commons/pz_lua_commons/common/media/lua/shared/?.lua;"
-    .. package.path
-package.path = "d:/DATA/2026/pz_mods_2026/zul/zul/42/media/lua/shared/?.lua;" .. package.path
+package.path = testDir .. "../../../zul/zul/42/media/lua/shared/?.lua;" .. package.path
 
 local TestRunner = require("test_framework")
 

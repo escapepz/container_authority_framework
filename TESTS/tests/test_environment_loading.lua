@@ -1,12 +1,14 @@
 ---@diagnostic disable: global-in-non-module
 -- TESTS/tests/test_environment_loading.lua
-package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/TESTS/tests/?.lua;"
+local testDir = debug.getinfo(1).source:match("@?(.*/)")
+package.path = testDir .. "?.lua;" .. package.path
+package.path = testDir
+    .. "../../container_authority_framework/42/media/lua/shared/?.lua;"
     .. package.path
-package.path = "d:/DATA/2026/pz_mods_2026/container_authority_framework/container_authority_framework/42/media/lua/server/?.lua;"
+package.path = testDir
+    .. "../../../../pz_tools/pz_lua_commons/pz_lua_commons/common/media/lua/shared/?.lua;"
     .. package.path
-package.path = "d:/DATA/2026/pz_tools/pz_lua_commons/pz_lua_commons/common/media/lua/shared/?.lua;"
-    .. package.path
-package.path = "d:/DATA/2026/pz_mods_2026/zul/zul/42/media/lua/shared/?.lua;" .. package.path
+package.path = testDir .. "../../../zul/zul/42/media/lua/shared/?.lua;" .. package.path
 
 local TestRunner = require("test_framework")
 local mock_pz = require("mock_pz")
@@ -17,20 +19,22 @@ mock_pz.setupGlobalEnvironment()
 -- We need to mock the patch module so we can spy on it
 local is_inventory_transfer_action_patch =
     require("container_authority_framework/patches/is_inventory_transfer_action_patch")
-local patchApplied = { server = false }
-local original_serverSidePatch = is_inventory_transfer_action_patch.serverSidePatch
+local patchApplied = { server = false, client = false }
 
 function is_inventory_transfer_action_patch.serverSidePatch()
     patchApplied.server = true
-    -- Don't call original to avoid crashing on missing ISInventoryTransferAction in pure Lua
+end
+
+function is_inventory_transfer_action_patch.clientSidePatch()
+    patchApplied.client = true
 end
 
 -- Load the init module
-local server_patches_init = require("container_authority_framework/patches/server_patches_init")
+local shared_patches_init = require("container_authority_framework/patches/shared_patches_init")
 
 TestRunner.register("EnvLoading: Singleplayer Mode (Local)", function()
     -- Reset state
-    patchApplied.server = false
+    patchApplied.client = false
     _G._eventCallbacks = {} -- Clear registered events
 
     -- Set SP Environment
@@ -39,29 +43,26 @@ TestRunner.register("EnvLoading: Singleplayer Mode (Local)", function()
     mock_pz.setMultiplayer(false)
 
     -- Run Init
-    server_patches_init()
+    shared_patches_init()
 
-    -- Verify OnGameBoot registration
-    TestRunner.assert_not_nil(
+    -- Verify OnGameBoot is NOT registered (now using OnGameStart only)
+    TestRunner.assert_nil(
         _G._eventCallbacks["OnGameBoot"],
-        "OnGameBoot should be registered in SP"
+        "OnGameBoot should NOT be registered in SP"
     )
-    mock_pz.triggerEvent("OnGameBoot")
-    TestRunner.assert_true(patchApplied.server, "Patch should apply on OnGameBoot (SP)")
 
-    -- Reset and verify OnGameStart (for Local fallback/SP specific init)
-    patchApplied.server = false
+    -- Verify OnGameStart
     TestRunner.assert_not_nil(
         _G._eventCallbacks["OnGameStart"],
         "OnGameStart should be registered in SP"
     )
     mock_pz.triggerEvent("OnGameStart")
-    TestRunner.assert_true(patchApplied.server, "Patch should apply on OnGameStart (SP)")
+    TestRunner.assert_true(patchApplied.client, "Patch should apply on OnGameStart (SP)")
 end)
 
 TestRunner.register("EnvLoading: Multiplayer Server Mode", function()
     -- Reset state
-    patchApplied.server = false
+    patchApplied.client = false
     _G._eventCallbacks = {}
 
     -- Set MP Server Environment
@@ -70,26 +71,22 @@ TestRunner.register("EnvLoading: Multiplayer Server Mode", function()
     mock_pz.setMultiplayer(true)
 
     -- Run Init
-    server_patches_init()
+    shared_patches_init()
 
-    -- Verify OnGameBoot registration
-    TestRunner.assert_not_nil(
+    -- Verify nothing registered on Server (Dedicated) for shared patches
+    TestRunner.assert_nil(
         _G._eventCallbacks["OnGameBoot"],
-        "OnGameBoot should be registered on Server"
+        "OnGameBoot should NOT be registered on Server"
     )
-    mock_pz.triggerEvent("OnGameBoot")
-    TestRunner.assert_true(patchApplied.server, "Patch should apply on OnGameBoot (Server)")
-
-    -- Verify OnGameStart is NOT registered (not SP)
     TestRunner.assert_nil(
         _G._eventCallbacks["OnGameStart"],
         "OnGameStart should NOT be registered on Server"
     )
 end)
 
-TestRunner.register("EnvLoading: Multiplayer Client Mode (Should skip)", function()
+TestRunner.register("EnvLoading: Multiplayer Client Mode", function()
     -- Reset state
-    patchApplied.server = false
+    patchApplied.client = false
     _G._eventCallbacks = {}
 
     -- Set MP Client Environment
@@ -98,16 +95,20 @@ TestRunner.register("EnvLoading: Multiplayer Client Mode (Should skip)", functio
     mock_pz.setMultiplayer(true)
 
     -- Run Init
-    server_patches_init()
+    shared_patches_init()
 
-    -- Verify nothing registered
+    -- Verify OnGameStart registered for Client
+    TestRunner.assert_not_nil(
+        _G._eventCallbacks["OnGameStart"],
+        "OnGameStart should be registered on Client"
+    )
+    mock_pz.triggerEvent("OnGameStart")
+    TestRunner.assert_true(patchApplied.client, "Patch should apply on OnGameStart (Client)")
+
+    -- Verify OnGameBoot is NOT registered
     TestRunner.assert_nil(
         _G._eventCallbacks["OnGameBoot"],
         "OnGameBoot should NOT be registered on Client"
-    )
-    TestRunner.assert_nil(
-        _G._eventCallbacks["OnGameStart"],
-        "OnGameStart should NOT be registered on Client"
     )
 end)
 

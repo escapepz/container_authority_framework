@@ -37,10 +37,8 @@ return function()
         return
     end
 
-    if KUtilities.IsServerOrSinglePlayer() then
-        -- Register the rule
-        CAF:registerRule("post", "audit_log", logTransfer, 500)
+    -- Register the rule
+    CAF:registerRule("post", "audit_log", logTransfer, 500)
 
-        safe_logger:log("[CAF] Audit Log Rule loaded.", 30)
-    end
+    safe_logger:log("[CAF] Audit Log Rule loaded.", 30)
 end
