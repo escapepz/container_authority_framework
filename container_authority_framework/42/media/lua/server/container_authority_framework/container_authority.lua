@@ -26,6 +26,26 @@ local VALIDATION_EV = "CAF:Validation"
 local PRE_TRANSFER_EV = "CAF:PreTransfer"
 local POST_TRANSFER_EV = "CAF:PostTransfer"
 
+---@class ContainerAuthorityFlags
+---@field rejected boolean Whether the action is rejected.
+---@field reason string The reason for rejection.
+---@field adminOverride boolean Whether the action is overridden by an admin.
+
+---@class ContainerAuthorityMetadata
+---@field table metadata for the context.
+
+---@class ContainerAuthorityContext
+---@field actionName string The name of the action (e.g. "Transfer", "Dismantle").
+---@field action table The timed action instance.
+---@field item InventoryItem|nil The item being manipulated.
+---@field character IsoPlayer The player performing the action.
+---@field src ItemContainer The source container.
+---@field dest ItemContainer The destination container.
+---@field dropSquare IsoGridSquare|nil Optional square to drop the item on.
+---@field flags ContainerAuthorityFlags The flags for the context.
+---@field metadata ContainerAuthorityMetadata The metadata for the context.
+---@field result any The result of the original transfer function.
+
 ---@class ContainerAuthority
 ---@field private _isProcessing boolean Recursion guard
 ---@field private _rules table<string, table>
@@ -41,6 +61,66 @@ function ContainerAuthority:initialize()
     self.PostTransferEvent = POST_TRANSFER_EV
     self.isReady = false
     self.pendingRules = {} -- Queue for early registrations
+end
+
+---Creates a transfer context for an action.
+---@type ContainerAuthorityContext
+---@return ContainerAuthorityContext The context object.
+function ContainerAuthority:createContext(
+    actionName,
+    action,
+    item,
+    character,
+    src,
+    dest,
+    dropSquare
+)
+    local ctx = reusableContext
+    ctx.actionName = actionName
+    ctx.action = action
+    ctx.item = item
+    ctx.character = character
+    ctx.src = src
+    ctx.dest = dest
+    ctx.dropSquare = dropSquare
+
+    -- Reset flags
+    local flags = ctx.flags
+    flags.rejected = false
+    flags.reason = nil
+    flags.adminOverride = false
+
+    -- Reset metadata (efficient clearing)
+    for k in pairs(ctx.metadata) do
+        ctx.metadata[k] = nil
+    end
+
+    return ctx
+end
+
+---Processes a specific phase of a transfer request.
+---@param phase string The phase ("validate", "pre", "post").
+---@param ctx table The context object created via createContext.
+function ContainerAuthority:processAction(phase, ctx)
+    local eventName
+    if phase == "validate" then
+        eventName = VALIDATION_EV
+    elseif phase == "pre" then
+        eventName = PRE_TRANSFER_EV
+    elseif phase == "post" then
+        eventName = POST_TRANSFER_EV
+    else
+        error("Invalid CAF phase: " .. tostring(phase))
+    end
+
+    EventManager.trigger(eventName, ctx)
+
+    if phase == "validate" and ctx.flags.rejected then
+        logger:warn("Action rejected", {
+            action = ctx.actionName,
+            reason = ctx.flags.reason or "Unknown reason",
+        })
+    end
 end
 
 ---Loads configuration from SandboxVars and sets up EventManager limits.
@@ -101,60 +181,6 @@ end
 ---@param originalFunc function The original transfer function to call if valid.
 ---@param dropSquare IsoGridSquare|nil Optional square to drop the item on.
 ---@return any The result of the original transfer function or nil if rejected.
--- Internal protected function to avoid closure allocations in pcall
-local function protectedTransferLogic(self, character, item, src, dest, originalFunc, dropSquare)
-    -- Update reusable object instead of allocating {}
-    local ctx = reusableContext
-    ctx.character = character
-    ctx.item = item
-    ctx.src = src
-    ctx.dest = dest
-    ctx.dropSquare = dropSquare
-
-    -- Reset flags
-    local flags = ctx.flags
-    flags.rejected = false
-    flags.reason = nil
-    flags.adminOverride = false
-
-    -- Reset metadata (efficient clearing)
-    for k in pairs(ctx.metadata) do
-        ctx.metadata[k] = nil
-    end
-
-    -- 1. VALIDATION PHASE (Blocking)
-    EventManager.trigger(VALIDATION_EV, ctx)
-
-    if ctx.flags.rejected then
-        logger:warn("Transfer rejected", { reason = ctx.flags.reason or "Unknown reason" })
-        return nil
-    end
-
-    -- 2. PRE-TRANSFER PHASE (Mutation/Auditing)
-    EventManager.trigger(PRE_TRANSFER_EV, ctx)
-
-    logger:debug("after pre transfer " .. tostring(ctx.flags.rejected))
-    logger:debug("item", { item, src, dest })
-
-    -- 3. EXECUTION
-    -- Direct call with explicit args is faster than ... or unpack(args)
-    local result = originalFunc(self, character, item, src, dest, dropSquare)
-
-    -- 4. POST-TRANSFER PHASE (Reaction/Side-effects)
-    ctx.result = result
-    EventManager.trigger(POST_TRANSFER_EV, ctx)
-
-    return result
-end
-
----Processes a transfer request through the 3-phase pipeline.
----@param character IsoPlayer The player performing the transfer.
----@param item InventoryItem The item being transferred.
----@param src ItemContainer The source container.
----@param dest ItemContainer The destination container.
----@param originalFunc function The original transfer function to call if valid.
----@param dropSquare IsoGridSquare|nil Optional square to drop the item on.
----@return any The result of the original transfer function or nil if rejected.
 function ContainerAuthority:processTransfer(character, item, src, dest, originalFunc, dropSquare)
     if self._isProcessing then
         return originalFunc(self, character, item, src, dest, dropSquare)
@@ -162,16 +188,33 @@ function ContainerAuthority:processTransfer(character, item, src, dest, original
 
     self._isProcessing = true
 
-    -- Wrap in pcall to ensure recursion guard is ALWAYS released, even on error
-    local success, result =
-        pcall(protectedTransferLogic, self, character, item, src, dest, originalFunc, dropSquare)
+    -- Backwards compatibility wrapper using the new split logic
+    local success, result = pcall(function()
+        local ctx = self:createContext("Transfer", nil, item, character, src, dest, dropSquare)
+
+        -- 1. VALIDATION PHASE
+        self:processAction("validate", ctx)
+        if ctx.flags.rejected then
+            return nil
+        end
+
+        -- 2. PRE-TRANSFER PHASE
+        self:processAction("pre", ctx)
+
+        -- 3. EXECUTION
+        local res = originalFunc(self, character, item, src, dest, dropSquare)
+
+        -- 4. POST-TRANSFER PHASE
+        ctx.result = res
+        self:processAction("post", ctx)
+
+        return res
+    end)
 
     self._isProcessing = false
 
     if not success then
         logger:error("Critical Error in processTransfer", { error = tostring(result) })
-        -- Optional: Re-throw if you want to hard-crash or notify vanilla error handler
-        -- error(result)
         return nil
     end
 
