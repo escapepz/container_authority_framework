@@ -11,7 +11,7 @@
     "mods": {
         "container_authority_framework": {
             "author": "escapepz",
-            "modversion": "1.0.1",
+            "modversion": "1.0.3",
             "versionMin": "42.13.1",
             "name": "Container Authority Framework",
             "description": "",

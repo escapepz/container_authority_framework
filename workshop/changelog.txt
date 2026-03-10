@@ -1,0 +1,13 @@
+v1.0.3
+add support for 42.15.0
+
+v1.0.2
+- is inventory transfer action
+- client only patches
+https://github.com/escapepz/container_authority_framework/releases/tag/v1.0.2
+
+v1.0.1
+chore folder name
+
+v1.0.0
+first release
