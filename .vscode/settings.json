@@ -1,24 +1,22 @@
 {
-    "extensions.ignoreRecommendations": false,
-    "files.associations": {
-        "*.txt": "ZedScripts"
-    },
-    "[lua]": {
-        "editor.defaultFormatter": "JohnnyMorganz.stylua",
-    },
-    "lua.debug.settings.luaVersion": "lua51",
-    "cSpell.words": [
-        "johnnymorganz",
-        "kikito",
-        "konijima",
-        "middleclass",
-        "mklink",
-        "nonsteam",
-        "pzstudio",
-        "Singleplayer",
-        "steamapps",
-        "stylua",
-        "Zomb",
-        "Zomboid"
-    ]
+  "extensions.ignoreRecommendations": false,
+  "files.associations": {},
+  "[lua]": {
+    "editor.defaultFormatter": "JohnnyMorganz.stylua"
+  },
+  "lua.debug.settings.luaVersion": "lua51",
+  "cSpell.words": [
+    "johnnymorganz",
+    "kikito",
+    "konijima",
+    "middleclass",
+    "mklink",
+    "nonsteam",
+    "pzstudio",
+    "Singleplayer",
+    "steamapps",
+    "stylua",
+    "Zomb",
+    "Zomboid"
+  ]
 }

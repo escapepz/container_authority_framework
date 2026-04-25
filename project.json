@@ -1,26 +1,25 @@
 {
-    "$schema": "https://raw.githubusercontent.com/escapepz/project-zomboid-studio/refs/heads/b42.13.1/pzstudio.schema.json",
+  "$schema": "https://raw.githubusercontent.com/escapepz/project-zomboid-studio/refs/heads/42.17.0/pzstudio.schema.json",
+  "workshop": {
     "title": "Container Authority Framework",
-    "authors": ["escapepz"],
-    "workshop": {
-        "id": 3672918592,
-        "visibility": "unlisted",
-        "tags": ["Build 42", "Framework", "Multiplayer", "QoL"],
-        "excludes": ["caf_example_rules"]
+    "id": 3672918592,
+    "visibility": "public",
+    "tags": ["Build 42", "Framework", "Multiplayer", "QoL"]
+  },
+  "excludes": ["caf_example_rules"],
+  "mods": {
+    "container_authority_framework": {
+      "author": "escapepz",
+      "modversion": "1.0.3",
+      "versionMin": "42.13.1",
+      "name": "Container Authority Framework",
+      "description": "A modding framework that lets creators build custom storage rules and container interactions.",
+      "require": ["zul", "pz_lua_commons"]
     },
-    "mods": {
-        "container_authority_framework": {
-            "author": "escapepz",
-            "modversion": "1.0.3",
-            "versionMin": "42.13.1",
-            "name": "Container Authority Framework",
-            "description": "",
-            "require": ["\\zul", "\\pz_lua_commons"]
-        },
-        "caf_example_rules": {
-            "name": "Container Authority Framework Example Rules",
-            "description": "",
-            "require": "\\container_authority_framework"
-        }
+    "caf_example_rules": {
+      "name": "Container Authority Framework Example Rules",
+      "description": "",
+      "require": "container_authority_framework"
     }
+  }
 }

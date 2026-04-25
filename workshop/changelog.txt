@@ -1,5 +1,12 @@
+v1.0.4
+- revert the mod.info name and desc
+-
+
 v1.0.3
-add support for 42.15.0
+- add support for 42.15.0
+- workshop image 512x512
+
+https://github.com/escapepz/container_authority_framework/releases/tag/v1.0.3
 
 v1.0.2
 - is inventory transfer action
